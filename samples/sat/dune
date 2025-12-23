@@ -1,0 +1,4 @@
+(executable
+ (name cp_sat_example)
+ (libraries ortools ortools_solvers))
+

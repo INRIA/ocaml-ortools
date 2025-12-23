@@ -1,0 +1,11 @@
+(library
+  (name ortools_solvers)
+  (public_name ortools_solvers)
+  (synopsis "Call Google OR-Tools solvers")
+  (modules ortools_solvers)
+  (foreign_stubs
+    (language c)
+    (names ocaml_ortools_solvers))
+  (c_library_flags -lortools)
+  (libraries ortools)
+)
