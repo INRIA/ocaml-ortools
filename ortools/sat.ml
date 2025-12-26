@@ -16,44 +16,44 @@
 module PB = Cp_model
 
 (* Ersatz DynArray for OCaml < 5.2 *)
-module DynArray =
-  struct
-    let max32 = Int32.(to_int max_int)
+module DynArray = struct (* {{{ *)
 
-    type 'a t = {
-      mutable contents : ('a option) array;
-      mutable size : int;
-      size_inc : int;
+  let max32 = Int32.(to_int max_int)
+
+  type 'a t = {
+    mutable contents : ('a option) array;
+    mutable size : int;
+    size_inc : int;
+  }
+
+  let make n =
+    let n = Int.min n max32 in
+    {
+      contents = Array.make n None;
+      size = 0;
+      size_inc = n;
     }
 
-    let make n =
-      let n = Int.min n max32 in
-      {
-        contents = Array.make n None;
-        size = 0;
-        size_inc = n;
-      }
+  let add_last ({ size; size_inc; contents } as a) v =
+    if size = Array.length contents then begin
+      let size' = Int.min (size + size_inc) max32 in
+      if size' <= size then invalid_arg "too many variables";
+      a.contents <-
+        Array.init (size + size_inc)
+          (fun i -> if i < size then Array.get contents i else None);
+    end;
+    Array.set a.contents size (Some v);
+    a.size <- size + 1;
+    size (* index of added element *)
 
-    let add_last ({ size; size_inc; contents } as a) v =
-      if size = Array.length contents then begin
-        let size' = Int.min (size + size_inc) max32 in
-        if size' <= size then invalid_arg "too many variables";
-        a.contents <-
-          Array.init (size + size_inc)
-            (fun i -> if i < size then Array.get contents i else None);
-      end;
-      Array.set a.contents size (Some v);
-      a.size <- size + 1;
-      size (* index of added element *)
+  let to_list { contents; size; _ } =
+    let rec f i xs =
+      if i < 0 then xs
+      else f (i - 1) (Option.get (Array.get contents i) :: xs)
+    in
+    f (size - 1) []
 
-    let to_list { contents; size; _ } =
-      let rec f i xs =
-        if i < 0 then xs
-        else f (i - 1) (Option.get (Array.get contents i) :: xs)
-      in
-      f (size - 1) []
-
-  end
+end (* }}} *)
 
 type var = int (* int32 *)
 type lit = int (* int32 *)
@@ -70,247 +70,289 @@ type t = {
   constant_to_index_map  : (intval, var) Hashtbl.t;
 }
 
-module Var =
-  struct
+module Var = struct (* {{{ *)
 
-    type 'a var = int
-    type 'a t = 'a var
-    (* TODO: track owning model and check for errors? *)
+  type 'a var = int
+  type 'a t = 'a var
+  (* TODO: track owning model and check for errors? *)
 
-    type t_bool = [`Bool] t
-    type t_int  = [`Int] t
+  type t_bool = [`Bool] t
+  type t_int  = [`Int] t
 
-    let new_int { variables; _ } ?name ~lb ~ub () =
-      (* if lb > ub then invalid_arg "required: lb <= ub"; *)
-      let nvar = PB.default_integer_variable_proto () in
-      PB.integer_variable_proto_set_domain nvar [Int64.of_int lb; Int64.of_int ub];
-      Option.iter (PB.integer_variable_proto_set_name nvar) name;
-      DynArray.add_last variables nvar
+  let new_int { variables; _ } ?name ~lb ~ub () =
+    (* if lb > ub then invalid_arg "required: lb <= ub"; *)
+    let nvar = PB.default_integer_variable_proto () in
+    PB.integer_variable_proto_set_domain nvar [Int64.of_int lb; Int64.of_int ub];
+    Option.iter (PB.integer_variable_proto_set_name nvar) name;
+    DynArray.add_last variables nvar
 
-    let new_bool { variables; _ } ?name () =
-      let nvar = PB.default_integer_variable_proto () in
-      PB.integer_variable_proto_set_domain nvar [Int64.zero; Int64.one];
-      Option.iter (PB.integer_variable_proto_set_name nvar) name;
-      DynArray.add_last variables nvar
+  let new_bool { variables; _ } ?name () =
+    let nvar = PB.default_integer_variable_proto () in
+    PB.integer_variable_proto_set_domain nvar [Int64.zero; Int64.one];
+    Option.iter (PB.integer_variable_proto_set_name nvar) name;
+    DynArray.add_last variables nvar
 
-    let neg = Int.neg
+  let neg = Int.neg
 
-    let ref_is_positive ref = ref >= 0
-    let negated_ref ref = (neg ref) - 1
+  let ref_is_positive ref = ref >= 0
+  let negated_ref ref = (neg ref) - 1
 
-    let to_index ref =
-      if ref_is_positive ref then ref
-      else negated_ref ref
+  let to_index ref =
+    if ref_is_positive ref then ref
+    else negated_ref ref
 
-    let new_constant ({ constant_to_index_map; _ } as m) c =
-      match Hashtbl.find_opt constant_to_index_map c with
-      | None ->
-          let v = new_int m ~lb:c ~ub:c () in
-          Hashtbl.add constant_to_index_map c v;
-          v
-      | Some v -> v
+  let new_constant ({ constant_to_index_map; _ } as m) c =
+    match Hashtbl.find_opt constant_to_index_map c with
+    | None ->
+        let v = new_int m ~lb:c ~ub:c () in
+        Hashtbl.add constant_to_index_map c v;
+        v
+    | Some v -> v
 
-    (* TODO: richer domains? *)
-    (* TODO: to_string, pp, etc. *)
+  let to_bool x = x (* TODO: check domain *)
+  let to_int x = x (* TODO: ensure not negative *)
 
-  end
+  (* TODO: richer domains? *)
+  (* TODO: to_string, pp, etc. *)
+
+end (* }}} *)
 
 (* Linear Constraints *)
 
-module LinearExpr =
-  struct
-    type t = intval * (intval * [`Bool|`Int] Var.t) list
+module LinearExpr = struct (* {{{ *)
 
-    let convert k (c, v) =
-      if Var.ref_is_positive v
-      then (k, (c, v))
-      else (k + 1, (- c, Var.negated_ref v)) (* add 1 - var *)
+  type t = intval * (intval * [`Bool|`Int] Var.t) list
 
-    let converts = List.fold_left_map convert 0
+  let convert k (c, v) =
+    if Var.ref_is_positive v
+    then (k, (c, v))
+    else (k + 1, (- c, Var.negated_ref v)) (* add 1 - var *)
 
-    let sum = List.fold_left_map (fun k v -> convert k (1, v)) 0
+  let converts = List.fold_left_map convert 0
 
-    let weighted_sum = List.fold_left_map convert 0
+  let sum = List.fold_left_map (fun k v -> convert k (1, v)) 0
 
-    let term cv = converts [cv]
+  let weighted_sum = List.fold_left_map convert 0
 
-    let neg (c, v) = (- c, v)
+  let term cv = converts [cv]
 
-    let scale s (k, vs) = (s * k, List.map (fun (c, v) -> (s * c, v)) vs)
+  let scale s (k, vs) = (s * k, List.map (fun (c, v) -> (s * c, v)) vs)
 
-    let of_int c = (c, [])
+  let of_int c = (c, [])
 
-    module L =
-      struct
+  let var v = term (1, v)
 
-        let ( * ) c v = term (c, v)
+  let neg (k, cvs) = (-k, List.map (fun (c, v) -> (-c, v)) cvs)
 
-        let ( + ) (k_l, vs_l) (k_r, vs_r) = (k_l + k_r, vs_l @ vs_r)
+  module L = struct (* {{{ *)
 
-        let ( - ) (k_l, vs_l) (k_r, vs_r) = (k_l - k_r, vs_l @ (List.map neg vs_r))
+    let ( * ) c v = term (c, v)
 
-        let scale = scale
-        let of_int = of_int
+    let ( + ) (k_l, vs_l) (k_r, vs_r) = (k_l + k_r, vs_l @ vs_r)
 
-      end
+    let ( - ) lhs rhs = lhs + (neg rhs)
 
-    let to_proto (k, vs) =
-      let coeffs, vars = List.split vs in
-      PB.make_linear_expression_proto
-        ~vars:(List.map Int32.of_int vars)
-        ~coeffs:(List.map Int64.of_int coeffs)
-        ~offset:(Int64.of_int k) ()
+    let var = var
+    let scale = scale
+    let of_int = of_int
 
-    let to_objective_proto (k, vs) =
-      let coeffs, vars = List.split vs in
-      PB.make_cp_objective_proto
-        ~vars:(List.map Int32.of_int vars)
-        ~coeffs:(List.map Int64.of_int coeffs)
-        ~offset:(Int.to_float k) ()
-  end
+  end (* }}} *)
 
-module Constraint =
-  struct
+  let to_proto (k, vs) =
+    let coeffs, vars = List.split vs in
+    PB.make_linear_expression_proto
+      ~vars:(List.map Int32.of_int vars)
+      ~coeffs:(List.map Int64.of_int coeffs)
+      ~offset:(Int64.of_int k) ()
 
-    type equality = {
-      target: LinearExpr.t;
-      exprs: LinearExpr.t list;
-    }
+  let to_objective_proto (k, vs) =
+    let coeffs, vars = List.split vs in
+    PB.make_cp_objective_proto
+      ~vars:(List.map Int32.of_int vars)
+      ~coeffs:(List.map Int64.of_int coeffs)
+      ~offset:(Int.to_float k) ()
 
-    type equality2 = {
-      target: LinearExpr.t;
-      arg1:   LinearExpr.t;
-      arg2:   LinearExpr.t;
-    }
+end (* }}} *)
 
-    type lt = PB.linear_constraint_proto
+module Constraint = struct (* {{{ *)
 
-    type t =
-      | Or of Var.t_bool list
-      | And of Var.t_bool list
-      | At_most_one of Var.t_bool list
-      | Exactly_one of Var.t_bool list
-      | Xor of Var.t_bool list
-      | Div of equality2
-      | Mod of equality2
-      | Prod of equality
-      | Max of equality
-      | Linear of lt
-      | All_diff of LinearExpr.t list
-      (* TODO:
-      | Element of element_constraint_proto
-      | Circuit of circuit_constraint_proto
-      | Routes of routes_constraint_proto
-      | Table of table_constraint_proto
-      | Automaton of automaton_constraint_proto
-      | Inverse of inverse_constraint_proto
-      | Reservoir of reservoir_constraint_proto
-      | Interval of interval_constraint_proto
-      | No_overlap of no_overlap_constraint_proto
-      | No_overlap_2d of no_overlap2_dconstraint_proto
-      | Cumulative of cumulative_constraint_proto
-      | Dummy_constraint of list_of_variables_proto
-      *)
+  type equality = {
+    target: LinearExpr.t;
+    exprs: LinearExpr.t list;
+  }
 
-      (* Same as `Or`. *)
-    let at_least_one bs = Or bs
+  let check_equality { target; exprs = _ } =
+    (match target with
+     | (_, [ _ ]) -> ()
+     | _ -> invalid_arg "target must be a constant or (scaled) variable")
 
-    let implication a b = Or [Var.neg a; b]
+  type equality2 = {
+    target: LinearExpr.t;
+    arg1:   LinearExpr.t;
+    arg2:   LinearExpr.t;
+  }
 
-    let min { target; exprs } =
-      Max { target = LinearExpr.scale (-1) target;
-            exprs = List.map (LinearExpr.scale (-1)) exprs }
+  let check_equality2 { target; arg1 = _; arg2 } =
+    (match target with
+     | (_, [ _ ]) -> ()
+     | _ -> invalid_arg "target must be a constant or (scaled) variable");
+    (match arg2 with
+     | (_, [ (_, _v) ]) -> () (* should check that _v.ub = _v.lb... *)
+     | _ -> invalid_arg "arg2 must be a (scaled) constant");
 
-    let abs { target; exprs } =
-      Max { target;
-            exprs = exprs @ List.map (LinearExpr.scale (-1)) exprs }
+  type lt = PB.linear_constraint_proto
 
-    let equality2_proto { target; arg1; arg2 } =
-      let target = LinearExpr.to_proto target in
-      PB.make_linear_argument_proto ~target
-                                    ~exprs:[LinearExpr.to_proto arg1;
-                                            LinearExpr.to_proto arg2] ()
+  type t =
+    | Or of Var.t_bool list
+    | And of Var.t_bool list
+    | At_most_one of Var.t_bool list
+    | Exactly_one of Var.t_bool list
+    | Xor of Var.t_bool list
+    | Div of equality2
+    | Mod of equality2
+    | Prod of equality
+    | Max of equality
+    | Linear of lt
+    | All_diff of LinearExpr.t list
+    (* TODO:
+    | Element of element_constraint_proto
+    | Circuit of circuit_constraint_proto
+    | Routes of routes_constraint_proto
+    | Table of table_constraint_proto
+    | Automaton of automaton_constraint_proto
+    | Inverse of inverse_constraint_proto
+    | Reservoir of reservoir_constraint_proto
+    | Interval of interval_constraint_proto
+    | No_overlap of no_overlap_constraint_proto
+    | No_overlap_2d of no_overlap2_dconstraint_proto
+    | Cumulative of cumulative_constraint_proto
+    | Dummy_constraint of list_of_variables_proto
+    *)
 
-    let equality_proto { target; exprs } =
-      let target = LinearExpr.to_proto target in
-      let exprs = List.map LinearExpr.to_proto exprs in
-      PB.make_linear_argument_proto ~target ~exprs ()
+  let check = function
+    | Div eq2 | Mod eq2 -> check_equality2 eq2
+    | Prod eq | Max eq -> check_equality eq
+    | Or _ | And _ | At_most_one _ | Exactly_one _ | Xor _
+    | Linear _ | All_diff _ -> ()
 
-    let int32 = List.map Int32.of_int
+  let not x = Var.neg x
+  let bool_or bs = Or bs
+  let bool_and bs = And bs
+  let bool_xor bs = Xor bs
+  let at_most_one bs = At_most_one bs
+  let exactly_one bs = Exactly_one bs
+  let multiplication_equality x exprs =
+    Prod { target = LinearExpr.var x; exprs }
+  let division_equality x e c =
+    Div { target = LinearExpr.var x; arg1 = e; arg2 = LinearExpr.of_int c }
+  let modulo_equality x e c =
+    Mod { target = LinearExpr.var x; arg1 = e; arg2 = LinearExpr.of_int c }
+  let max_equality x exprs =
+    Max { target = LinearExpr.var x; exprs }
+  let all_different exprs = All_diff exprs
 
-    let to_proto = function
-      | Or bs  -> PB.(Bool_or (make_bool_argument_proto ~literals:(int32 bs) ()))
-      | And bs -> PB.(Bool_and (make_bool_argument_proto ~literals:(int32 bs) ()))
-      | At_most_one bs -> PB.(At_most_one (make_bool_argument_proto ~literals:(int32 bs) ()))
-      | Exactly_one bs -> PB.(Exactly_one (make_bool_argument_proto ~literals:(int32 bs) ()))
-      | Xor bs  -> PB.(Bool_xor (make_bool_argument_proto ~literals:(int32 bs) ()))
-      | Div eq2 -> PB.(Int_div (equality2_proto eq2))
-      | Mod eq2 -> PB.(Int_mod (equality2_proto eq2))
-      | Prod eq -> PB.(Int_prod (equality_proto eq))
-      | Max eq  -> PB.(Lin_max (equality_proto eq))
-      | Linear lc      -> PB.(Linear lc)
-      | All_diff exprs ->
-          let exprs = List.map LinearExpr.to_proto exprs in
-          PB.(All_diff (PB.make_all_different_constraint_proto ~exprs ()))
+  let min { target; exprs } =
+    Max { target = LinearExpr.scale (-1) target;
+          exprs = List.map (LinearExpr.scale (-1)) exprs }
+  let min_equality x exprs =
+    min { target = LinearExpr.var x; exprs }
 
-    let of_expr (k, vs) ~lb ~ub =
-      let k = Int64.of_int k in
-      let coeffs, vars = List.split vs in
-      Linear (PB.make_linear_constraint_proto
-                ~vars:(List.map Int32.of_int vars)
-                ~coeffs:(List.map Int64.of_int coeffs)
-                ~domain:Int64.[sub (of_int lb) k; sub (of_int ub) k]
-                ())
+  let at_least_one bs = Or bs
 
-    let fill_linear_terms (_, vs_l) (_, vs_r) =
-      let coeffs_l, vars_l = List.split vs_l in
-      let coeffs_r, vars_r = List.split vs_r in
-      (PB.make_linear_constraint_proto
-         ~vars:((List.map Int32.of_int vars_l) @ (List.map Int32.of_int vars_r))
-         ~coeffs:(List.map Int64.of_int coeffs_l
-                  @ List.map (fun c -> Int64.of_int (-c)) coeffs_r)
-         ())
+  let implication a b = Or [Var.neg a; b]
 
-    let (==) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v [rhs; rhs];
-      Linear v
+  let abs { target; exprs } =
+    Max { target;
+          exprs = exprs @ List.map (LinearExpr.scale (-1)) exprs }
+  let abs_equality x exprs =
+    abs { target = LinearExpr.var x; exprs }
 
-    let (>=) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v [rhs; Int64.max_int];
-      Linear v
+  let equality2_proto { target; arg1; arg2 } =
+    let target = LinearExpr.to_proto target in
+    PB.make_linear_argument_proto ~target
+                                  ~exprs:[LinearExpr.to_proto arg1;
+                                          LinearExpr.to_proto arg2] ()
 
-    let (<=) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v Int64.[min_int; rhs];
-      Linear v
+  let equality_proto { target; exprs } =
+    let target = LinearExpr.to_proto target in
+    let exprs = List.map LinearExpr.to_proto exprs in
+    PB.make_linear_argument_proto ~target ~exprs ()
 
-    let (>) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v Int64.[add rhs one; Int64.max_int];
-      Linear v
+  let int32 = List.map Int32.of_int
 
-    let (<) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v Int64.[min_int; sub rhs one];
-      Linear v
+  let to_proto = function
+    | Or bs  -> PB.(Bool_or (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | And bs -> PB.(Bool_and (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | At_most_one bs -> PB.(At_most_one (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | Exactly_one bs -> PB.(Exactly_one (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | Xor bs  -> PB.(Bool_xor (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | Div eq2 -> PB.(Int_div (equality2_proto eq2))
+    | Mod eq2 -> PB.(Int_mod (equality2_proto eq2))
+    | Prod eq -> PB.(Int_prod (equality_proto eq))
+    | Max eq  -> PB.(Lin_max (equality_proto eq))
+    | Linear lc      -> PB.(Linear lc)
+    | All_diff exprs ->
+        let exprs = List.map LinearExpr.to_proto exprs in
+        PB.(All_diff (PB.make_all_different_constraint_proto ~exprs ()))
 
-    let (!=) ((k_l, _) as left) ((k_r, _) as right) =
-      let v = fill_linear_terms left right in
-      let rhs = Int64.of_int (k_r - k_l) in
-      PB.linear_constraint_proto_set_domain v
-        Int64.[min_int; sub rhs one; add rhs one; max_int];
-      Linear v
+  let of_expr (k, vs) ~lb ~ub =
+    let k = Int64.of_int k in
+    let coeffs, vars = List.split vs in
+    Linear (PB.make_linear_constraint_proto
+              ~vars:(List.map Int32.of_int vars)
+              ~coeffs:(List.map Int64.of_int coeffs)
+              ~domain:Int64.[sub (of_int lb) k; sub (of_int ub) k]
+              ())
 
-    include LinearExpr.L
+  let fill_linear_terms (_, vs_l) (_, vs_r) =
+    let coeffs_l, vars_l = List.split vs_l in
+    let coeffs_r, vars_r = List.split vs_r in
+    (PB.make_linear_constraint_proto
+       ~vars:((List.map Int32.of_int vars_l) @ (List.map Int32.of_int vars_r))
+       ~coeffs:(List.map Int64.of_int coeffs_l
+                @ List.map (fun c -> Int64.of_int (-c)) coeffs_r)
+       ())
 
-  end
+  let (==) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v [rhs; rhs];
+    Linear v
+
+  let (>=) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v [rhs; Int64.max_int];
+    Linear v
+
+  let (<=) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v Int64.[min_int; rhs];
+    Linear v
+
+  let (>) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v Int64.[add rhs one; Int64.max_int];
+    Linear v
+
+  let (<) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v Int64.[min_int; sub rhs one];
+    Linear v
+
+  let (!=) ((k_l, _) as left) ((k_r, _) as right) =
+    let v = fill_linear_terms left right in
+    let rhs = Int64.of_int (k_r - k_l) in
+    PB.linear_constraint_proto_set_domain v
+      Int64.[min_int; sub rhs one; add rhs one; max_int];
+    Linear v
+
+  include LinearExpr.L
+
+end (* }}} *)
 
 let make ?(nvars=10000) ?name () = {
   name;
@@ -357,6 +399,8 @@ module Parameters =
   struct
     type t = Sat_parameters.sat_parameters
 
+    let defaults = Sat_parameters.default_sat_parameters
+
     let pb_encode params enc = Sat_parameters.encode_pb_sat_parameters params enc
 
     let pb_output params oc =
@@ -366,6 +410,7 @@ module Parameters =
   end
 
 let add ({ constraints; _ } as m) ?name ?(only_enforce_if=[]) c =
+  Constraint.check c;
   let enforcement_literal =
     match only_enforce_if with [] -> None | xs -> Some (List.map Int32.of_int xs) in
   let constraint_ = Constraint.to_proto c in
@@ -476,7 +521,7 @@ module Response =
       tightened_variables                      : vardom list;
       sufficient_assumptions_for_infeasibility : Var.t_bool list;
       integer_objective                        : objective option;
-      inner_objective_lower_bound              : int;
+      integer_objective_lower_bound            : int;
       num_integers                             : int;
       num_booleans                             : int;
       num_fixed_booleans                       : int;
@@ -546,7 +591,7 @@ module Response =
       sufficient_assumptions_for_infeasibility =
         List.map Int32.to_int sufficient_assumptions_for_infeasibility;
       integer_objective           = Option.map objective_of_proto integer_objective;
-      inner_objective_lower_bound = int_of_int64 inner_objective_lower_bound;
+      integer_objective_lower_bound = int_of_int64 inner_objective_lower_bound;
       num_integers                = int_of_int64 num_integers;
       num_booleans                = int_of_int64 num_booleans;
       num_fixed_booleans          = int_of_int64 num_fixed_booleans;

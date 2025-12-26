@@ -1,4 +1,4 @@
-(lang dune 3.18)
+(lang dune 3.20)
 (generate_opam_files true)
 
 (maintainers "Timothy Bourke <tim@tbrk.org>")
@@ -20,6 +20,7 @@ on the OR-Tools software, which need not even be installed. The interface
 currently only supports a subset of the features provided by the CP-SAT solver.
 Pull requests for more features and solvers are welcome.")
   (depends
+    (odoc :with-doc)
     (pbrt (>= 4.0))
     (ocaml (>= 4.14.2)))
 )
@@ -34,6 +35,7 @@ integer and linear programming, and constraint programming. This package
 provides OCaml wrappers for calling the OR-Tools solvers. It currently only
 supports the CP-SAT solver. Pull requests for other solvers are welcome.")
   (depends
+    (odoc :with-doc)
     (ortools (>= 0.1))
     (ocaml (>= 4.14.2)))
 )

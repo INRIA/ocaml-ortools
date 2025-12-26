@@ -1,0 +1,135 @@
+{0 OCaml interface to Google OR-Tools}
+
+OR-Tools is an open source software suite for optimization, tuned for
+tackling the world's toughest problems in vehicle routing, flows, integer
+and linear programming, and constraint programming.
+
+This interface allows for modeling problems in OCaml and exporting them,
+using {{: https://protobuf.dev}Protocol Buffers}, for solution by different
+solvers. At least in principle: for now, only the basic features of
+{{:https://developers.google.com/optimization/cp}CP-SAT} are supported.
+
+{1:api Main API}
+
+{!modules: Ortools.Sat}
+
+{[
+let model = Ortools.Sat.make () in
+
+(* Add variables. *)
+let ub = max [50; 45; 37] in
+let x = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"x" () in
+let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"y" () in
+let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"z" () in
+
+(* Add constraints. *)
+Ortools.Sat.(add model (2 * x + 7 * y + 3 * z <= 50));
+Ortools.Sat.(add model (3 * x - 5 * y + 7 * z <= 45));
+Ortools.Sat.(add model (5 * x + 2 * y - 6 * z <= 37));
+
+(* Set objective. *) 
+Ortools.Sat.(maximize model (2 * x + 2 * y + 3 * z));
+
+(* Solve the model. *)
+let Ortools.Sat.Response.{ status;
+		  objective_value;
+		  solution;
+		  num_conflicts;
+		  num_branches;
+		  wall_time; _ }
+  = Ortools_solvers.Sat.solve ~parameters model
+in
+
+(match status with
+| Optimal | Feasible ->
+  printf "Maximum of objective function: %g\n\n" objective_value;
+  printf "x = %d\n" solution.(Ortools.Sat.Var.to_index x);
+  printf "y = %d\n" solution.(Ortools.Sat.Var.to_index y);
+  printf "z = %d\n" solution.(Ortools.Sat.Var.to_index z)
+| _ -> printf "No solution found.\n");
+
+(* Statistics. *)
+printf "\nStatistics\n";
+printf "  status   : %s\n" (Ortools.Sat.Response.string_of_status status);
+printf "  conflicts: %d\n" num_conflicts;
+printf "  branches : %d\n" num_branches;
+printf "  wall time: %g s\n" wall_time
+]}
+
+In the example above, access to the solver is provided by the
+[ortools_solvers] package. An alternative is to dump the model to a file:
+
+{[
+let oc = open_out "cp_sat_example.pb" in
+Ortools.Sat.pb_output model oc;
+close_out oc
+]}
+
+and invoke the solver via C++ or Python, e.g.,
+
+{@python[
+from ortools.sat.python import cp_model
+
+model = cp_model.CpModel()
+model.Proto().ParseFromString(Path("cp_sat_example.pb").read_bytes())
+solver = cp_model.CpSolver()
+status = solver.solve(model)
+
+if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+    print(f"Maximum of objective function: {solver.objective_value}\n")
+    for i, v in enumerate(proto.variables):
+	pv = cp_model.IntVar(proto, i, v.domain == [0, 1], None)
+	print(f"{v.name} = {solver.value(pv)}")
+else:
+    print("No solution found.")
+
+print("\nStatistics")
+print(f"  status   : {solver.status_name(status)}")
+print(f"  conflicts: {solver.num_conflicts}")
+print(f"  branches : {solver.num_branches}")
+print(f"  wall time: {solver.wall_time} s")
+]}
+
+Note that when the protocol buffers are loaded in this way, the model data
+structures are not updated, that's why [IntVar] is used to create variables
+on-the-fly.
+
+{1:pb Raw Protocol Buffers APIs}
+
+OCaml interfaces generated from
+{{: https://github.com/google/or-tools/blob/main/ortools/sat/cp_model.proto}cp_model.proto}
+and {{: https://github.com/google/or-tools/blob/main/ortools/sat/sat_parameters.proto}sat_parameters.proto}
+using {{: https://github.com/mransan/ocaml-protoc}ocaml-protoc}.
+
+{2:pb-sat_parameters Sat_parameters}
+
+{!modules: Ortools.Sat_parameters}
+
+{!Ortools.Sat.Parameters.defaults} gives the set of default parameters.
+
+{!Ortools.Sat_parameters.make_sat_parameters} is used to specify non-default
+parameters for CP-SAT. For example:
+
+{[
+let parameters = Sat_parameters.make_sat_parameters
+		     ~max_time_in_seconds:60.
+		     ~relative_gap_limit:0.05
+		     (* ~absolute_gap_limit *)
+		     ~log_search_progress:true
+		     ~log_to_stdout:true
+		     (* ~log_prefix *)
+		      ~num_workers:8
+		     ()
+]}
+
+{2:pb-cp_model Cp_model}
+
+{!modules: Ortools.Cp_model}
+
+This raw interface is not normally used directly.
+Normally a CP-SAT model is constructed using the functions in
+{!module:Ortools.Sat}
+and converted to a protcol buffer with either
+{!val:Ortools.Sat.to_proto}, {!val:Ortools.Sat.pb_encode},
+or {!val:Ortools.Sat.pb_output}.
+
