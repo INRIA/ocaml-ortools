@@ -11,6 +11,11 @@ At least in principle: {b for now, only
 the basic features of {{:https://developers.google.com/optimization/cp}CP-SAT}
 are supported}.
 
+The {{:https://d-krupke.github.io/cpsat-primer/}CP-SAT Primer} gives an
+excellent introduction to constraint programming in general, and to the
+CP-SAT interface in particular. The examples are easily translated from
+Python to OCaml.
+
 {1:api Building Models}
 
 {!modules: Ortools.Sat}
