@@ -20,9 +20,9 @@ let model = Ortools.Sat.make () in
 
 (* Add variables. *)
 let ub = max [50; 45; 37] in
-let x = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"x" () in
-let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"y" () in
-let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub ~name:"z" () in
+let x = Ortools.Sat.Var.new_int model ~lb:0 ~ub "x" in
+let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub "y" in
+let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub "z" in
 
 (* Add constraints. *)
 Ortools.Sat.(add model (2 * x + 7 * y + 3 * z <= 50));

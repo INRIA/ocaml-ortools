@@ -19,7 +19,7 @@ module Sat : sig
 
   (** Try to solve the given model. *)
   val solve : ?parameters:Ortools.Sat.Parameters.t
-              -> Ortools.Sat.t
+              -> Ortools.Sat.model
               -> Ortools.Sat.Response.t
 
 end

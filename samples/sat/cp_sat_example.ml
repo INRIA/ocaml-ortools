@@ -27,9 +27,9 @@ let main () =
 
   (* Creates the variables. *)
   let var_upper_bound = max [50; 45; 37] in
-  let x = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound ~name:"x" () in
-  let y = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound ~name:"y" () in
-  let z = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound ~name:"z" () in
+  let x = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound "x" in
+  let y = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound "y" in
+  let z = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound "z" in
 
   (* Creates the constraints. *)
   CP.(add model (2 * x + 7 * y + 3 * z <= 50));

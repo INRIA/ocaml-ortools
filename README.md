@@ -12,7 +12,6 @@ TODO:
   - download ortools binaries and install with OCaml interface?
     (like Python does)
   - update from proto files
-* doc
 * reread cp_model.cc and double-check OCaml implementation
 * more samples
 * setup testing

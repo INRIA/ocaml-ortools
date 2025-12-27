@@ -18,41 +18,58 @@
 (** {1:model Models} *)
 
 (** A CP-SAT model. *)
-type t
+type model
 
 (** Create an empty model with an optional name. The [nvars] argument
     optionally specifies the expected number of variables, which determines
     the size and growth of internal data structures. *)
-val make : ?nvars:int -> ?name:string -> unit -> t
+val make : ?nvars:int -> ?name:string -> unit -> model
 
 (** Representation of integer variables and boolean literals. *)
 module Var : sig (* {{{ *)
-  (** Note: “attached to a model” *)
 
-  (** A variable / boolean literal *)
-  type 'a var
+  (** A variable or boolean literal. Note that each variable and boolean
+      literal is associated with a specific model. It is an error to mix
+      variables or literals from different models. *)
+  type 'a t
 
-  type t_bool = [`Bool] var
-  type t_int  = [`Int] var
+  (** A boolean literal. *)
+  type t_bool = [`Bool] t
 
-  val new_int : t -> ?name:string -> lb:int -> ub:int -> unit-> t_int
+  (** An integer variable. *)
+  type t_int  = [`Int] t
 
-  val new_bool : t -> ?name:string -> unit -> t_bool
+  (** Add a new bounded integer variable to a model. *)
+  val new_int : model -> lb:int -> ub:int -> string -> t_int
 
+  (** Add a new boolean variable to a model. *)
+  val new_bool : model -> string -> t_bool
+
+  (** Negate a boolean literal. *)
   val neg : t_bool -> t_bool
 
-  val new_constant : t -> int -> t_int
+  (** Create a new integer variable constrained to a given value. *)
+  val new_constant : model -> int -> t_int
 
-  type 'a t = 'a var
+  (** Expose the underlying index of a variable. *)
+  val to_index : 'a t -> int
 
-  val to_index : 'a var -> int
+  (** Assert that a variable is a boolean variable.
+      Raises [Invalid_argument] for a variable [x] that does not satisfy
+      [0 <= x <= 1]. *)
+  val to_bool : 'a t -> [`Bool] t
 
-  val to_bool : 'a var -> [`Bool] var
-  val to_int  : 'a var -> [`Int] var
+  (** Convert a variable to an integer variable.
+      Raises [Invalid_argument] on negated boolean literals. *)
+  val to_int  : 'a t -> [`Int] t
 
   (* TODO: richer domains? *)
 
-  (* TODO: to_string, pp, etc. *)
+  (** Return a string representing the variable or boolean literal. *)
+  val to_string : 'a t -> string
+
+  (** Pretty-printer for variables and boolean literals. *)
+  val pp : Format.formatter -> 'a t -> unit
 
 end (* }}} *)
 
@@ -90,7 +107,11 @@ module LinearExpr : sig (* {{{ *)
   (** Negate all coefficients (and the offset). *)
   val neg : t -> t
 
-  (* TODO: destructors, pp, etc. *)
+  (** Return a string representing the linear expression. *)
+  val to_string : t -> string
+
+  (** Pretty-printer for linear expressions. *)
+  val pp : Format.formatter -> t -> unit
 
   module L :
     sig
@@ -153,11 +174,6 @@ module Constraint : sig (* {{{ *)
     arg2:   LinearExpr.t;
   }
 
-  (** An opaque type representing a linear expression. Values of type
-      [Linear of lt] are created indirectly by the {!(<=)}, {!(==)}, and
-      similar operators. *)
-  type lt
-
   (** The primitive constraints treated by CP-SAT. *)
   type t =
     | Or of Var.t_bool list
@@ -179,11 +195,13 @@ module Constraint : sig (* {{{ *)
     | Max of equality
       (** Constrain a variable to equal the maximum of a list of linear
           expressions. *)
-    | Linear of lt
-    (** A linear constraint created by combining a
-        {{!LinearExpr.t}linear expression},
-        a relation, like {!(<=)} or {!(==)}, and
-        a constant. *)
+    | Linear of LinearExpr.t * int64 list
+      (** Constrains a {{!LinearExpr.t}linear expression} to a domain.
+          The [domain] must be a list of pairs [(lb, ub)] where [lb <= ub].
+          The pairs specify valid intervals for the expression.
+          [Int64.min_int] and [Int64.max_int] specify, respectively,
+          open lower or upper bounds. Values of type [Linear of lt] are created
+          by the {!(<=)}, {!(==)}, and similar operators. *)
     | All_diff of LinearExpr.t list
     (** Require that a list of (scaled) variables and constants have
         different values from each other. *)
@@ -207,7 +225,6 @@ module Constraint : sig (* {{{ *)
 
   (** {!Max} of the original expressions together with their negations. *)
   val abs : equality -> t
-
 
   (** {1:logical Logical Constraints} *)
 
@@ -301,13 +318,21 @@ module Constraint : sig (* {{{ *)
   (** A {!Linear} constraint: [lhs != rhs]. *)
   val (!=)    : LinearExpr.t -> LinearExpr.t -> t
 
+  (** {1:utility Utilities} *)
+
+  (** Return a string representing the linear expression. *)
+  val to_string : t -> string
+
+  (** Pretty-printer for linear expressions. *)
+  val pp : Format.formatter -> t -> unit
+
 end (* }}} *)
 
 (** Add a constraint to the model, with an optional name. The constraint is
     conditional if the [only_enforce_if] argument is a non-empty list of
     boolean literals. *)
 val add :
-     t
+     model
   -> ?name:string
   -> ?only_enforce_if:Var.t_bool list
   -> Constraint.t
@@ -316,7 +341,7 @@ val add :
 (** Adds an implication constraint to the model.
     [add_implication m lhs rhs = add m ~only_enforce_if:lhs (Constraint.And rhs)] *)
 val add_implication :
-     t
+     model
   -> ?name:string
   -> Var.t_bool list
   -> Var.t_bool list
@@ -343,29 +368,29 @@ val (!=)   : LinearExpr.t -> int -> Constraint.t
 (** {1:objectives Objectives} *)
 
 (** The linear expression to maximize. Any existing objective is replaced. *)
-val maximize : t -> LinearExpr.t -> unit
+val maximize : model -> LinearExpr.t -> unit
 
 (** The linear expression to minimize. Any existing objective is replaced. *)
-val minimize : t -> LinearExpr.t -> unit
+val minimize : model -> LinearExpr.t -> unit
 
 (** {2:hints Hints} *)
 
 (** Suggest an initial solution for the given variable. *)
-val add_hint : t -> 'a Var.t -> int -> unit
+val add_hint : model -> 'a Var.t -> int -> unit
 
 (** Suggest initial solutions for the given variables. *)
-val add_hints : t -> ('a Var.t * int) list -> unit
+val add_hints : model -> ('a Var.t * int) list -> unit
 
 (** Remove any initial solutions. *)
-val clear_hints : t -> unit
+val clear_hints : model -> unit
 
 (** {2:assumptions Assumptions} *)
 
 (** Add assumptions on boolean literals. *)
-val add_assumptions : t -> Var.t_bool list -> unit
+val add_assumptions : model -> Var.t_bool list -> unit
 
 (** Clear any assumptions on boolean literals. *)
-val clear_assumptions : t -> unit
+val clear_assumptions : model -> unit
 
 (** {1:solutions Solutions} *)
 
@@ -421,7 +446,7 @@ module Response : sig (* {{{ *)
 
   (** Information on the objective. *)
   type objective = {
-    terms                  : (Var.t_int * int) list;
+    terms                  : (int * Var.t_int) list;
     offset                 : float;
     scaling_factor         : float;
     domain                 : (int64 * int64) list;
@@ -481,7 +506,7 @@ module Response : sig (* {{{ *)
   }
 
   (** Convert from the protocol buffer response format. *)
-  val of_proto : Cp_model.cp_solver_response -> t
+  val of_proto : model -> Cp_model.cp_solver_response -> t
 
 end (* }}} *)
 
@@ -495,7 +520,7 @@ type raw_solver = parameters_pb:string -> model_pb:string -> string
 val solve :
      raw_solver
   -> ?parameters:Parameters.t
-  -> t
+  -> model
   -> Response.t
 
 (** {2:output Output} *)
@@ -503,11 +528,11 @@ val solve :
 (** Converts a model to a protocol buffer. NB: copying is minimized, so the
     returned data structure shares some (mutable) data structures with the
     model. I.e., it becomes invalid if the model is changed. *)
-val to_proto : t -> Cp_model.cp_model_proto
+val to_proto : model -> Cp_model.cp_model_proto
 
 (** Send the model to the output channel as a protocol buffer. *)
-val pb_output : t -> out_channel -> unit
+val pb_output : model -> out_channel -> unit
 
 (** Encode a model. *)
-val pb_encode : t -> Pbrt.Encoder.t -> unit
+val pb_encode : model -> Pbrt.Encoder.t -> unit
 
