@@ -25,6 +25,39 @@ type model
     the size and growth of internal data structures. *)
 val make : ?nvars:int -> ?name:string -> unit -> model
 
+(** A subset of the integers. *)
+module Domain : sig (* {{{ *)
+
+  (** Internally, represented as a sorted, non-adjacent list of intervals. *)
+  type t
+
+  (** An integer interval from lower and upper bounds.
+      - with both: {m \{ x \mid \mathtt{lb} \leq x \leq \mathtt{ub} \} },
+      - with [lb] only: {m \{ x \mid \mathtt{lb} \leq x \} },
+      - with [ub] only: {m \{ x \mid x \leq \mathtt{ub} \} }, and
+      - with neither or [lb >= ub]: {m \emptyset }. *)
+  val of_interval : ?lb:int -> ?ub:int -> unit -> t
+
+  (** A union of intervals from [(lb, ub)] pairs. *)
+  val of_intervals : (int * int) list -> t
+
+  (** One of a set of values. *)
+  val of_values : int list -> t
+
+  (** Union of two intervals. *)
+  val (@) : t -> t -> t
+
+  (** Union of a list of intervals. *)
+  val union : t list -> t
+
+  (** Return a string representing the domain. *)
+  val to_string : t -> string
+
+  (** Pretty-printer for domains. *)
+  val pp : Format.formatter -> t -> unit
+
+end (* }}} *)
+
 (** Representation of integer variables and boolean literals. *)
 module Var : sig (* {{{ *)
 
@@ -41,6 +74,9 @@ module Var : sig (* {{{ *)
 
   (** Add a new bounded integer variable to a model. *)
   val new_int : model -> lb:int -> ub:int -> string -> t_int
+
+  (** Restrict the new bounded integer variable to a domain. *)
+  val new_int_from_domain : model -> Domain.t -> string -> t_int
 
   (** Add a new boolean variable to a model. *)
   val new_bool : model -> string -> t_bool
@@ -62,8 +98,6 @@ module Var : sig (* {{{ *)
   (** Convert a variable to an integer variable.
       Raises [Invalid_argument] on negated boolean literals. *)
   val to_int  : 'a t -> [`Int] t
-
-  (* TODO: richer domains? *)
 
   (** Return a string representing the variable or boolean literal. *)
   val to_string : 'a t -> string
@@ -195,13 +229,10 @@ module Constraint : sig (* {{{ *)
     | Max of equality
       (** Constrain a variable to equal the maximum of a list of linear
           expressions. *)
-    | Linear of LinearExpr.t * int64 list
+    | Linear of LinearExpr.t * Domain.t
       (** Constrains a {{!LinearExpr.t}linear expression} to a domain.
-          The [domain] must be a list of pairs [(lb, ub)] where [lb <= ub].
-          The pairs specify valid intervals for the expression.
-          [Int64.min_int] and [Int64.max_int] specify, respectively,
-          open lower or upper bounds. Values of type [Linear of lt] are created
-          by the {!(<=)}, {!(==)}, and similar operators. *)
+          Values of type [Linear of lt] are created by the {!(<=)}, {!(==)},
+          and similar operators. *)
     | All_diff of LinearExpr.t list
     (** Require that a list of (scaled) variables and constants have
         different values from each other. *)
@@ -297,6 +328,8 @@ module Constraint : sig (* {{{ *)
 
   (** A {!Linear} constraint: [of_expr e lb ub] means [lb <= e <= ub]. *)
   val of_expr : LinearExpr.t -> lb:int -> ub:int -> t
+
+  val in_domain : LinearExpr.t -> Domain.t -> t
 
   include module type of LinearExpr.L
 

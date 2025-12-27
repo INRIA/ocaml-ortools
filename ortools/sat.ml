@@ -73,11 +73,78 @@ type t = {
 
 type model = t
 
+module I64 = struct
+  let (<) x y = Int64.compare x y < 0
+  let (<=) x y = Int64.compare x y <= 0
+  let (+) x y = Int64.add x y
+end
+
+let my_print_list pp_v fmt lparen xs rparen =
+  let rec f = function
+  | [] -> ()
+  | [x] -> pp_v fmt x
+  | x::xs ->
+      Format.(pp_v fmt x; pp_print_char fmt ','; pp_print_space fmt (); f xs)
+  in
+  Format.pp_open_hvbox fmt 1;
+  Format.pp_print_char fmt lparen;
+  f xs;
+  Format.pp_print_char fmt rparen;
+  Format.pp_close_box fmt ()
+
+module Domain = struct (* {{{ *)
+
+  type t = (int64 * int64) list
+
+  let compare_ivals (l1, _) (l2, _) = Int64.compare l1 l2
+
+  let normalize xs =
+    let open I64 in
+    let rec f = function
+      | (l1, u1) :: (((l2, u2) :: xs) as luxs) ->
+          if u1 < l1 then f luxs
+          else if u2 <= u1 then f ((l1, u1) :: xs)
+          else if l2 <= u1 + 1L then f ((l1, u2) :: xs)
+          else (l1, u1) :: f luxs
+      | xs -> xs
+    in
+    f (List.fast_sort compare_ivals xs)
+
+  let of_interval ?lb ?ub () =
+    [(Option.(value ~default:Int64.min_int (map Int64.of_int lb)),
+      Option.(value ~default:Int64.max_int (map Int64.of_int ub)))]
+
+  let of_intervals xs =
+    normalize (List.map (fun (l, u) -> Int64.(of_int l, of_int u)) xs)
+
+  let of_values xs =
+    normalize (List.(map (fun x -> (Int64.of_int x, Int64.of_int x))
+                       (sort_uniq Int.compare xs)))
+
+  let (@) lhs rhs = normalize (List.append lhs rhs)
+
+  let union xs = normalize (List.concat xs)
+
+  let flatten = List.concat_map (fun (l, u) -> [l; u])
+
+  let pp1 fmt (lb, ub) =
+    if lb = ub then Format.fprintf fmt "%Ld" lb
+    else Format.fprintf fmt "[%Ld, %Ld]" lb ub
+
+  let pp fmt xs =
+    match xs with
+    | [] -> Format.pp_print_string fmt "empty"
+    | [x] -> pp1 fmt x
+    | xs -> my_print_list pp1 fmt '[' xs ']'
+
+  let to_string xs = Format.asprintf "%a" pp xs
+
+end (* }}} *)
+
 module Var = struct (* {{{ *)
 
   type 'a var = t * int
   type 'a t = 'a var
-  (* TODO: track owning model and check for errors? *)
 
   type t_bool = [`Bool] t
   type t_int  = [`Int] t
@@ -86,6 +153,12 @@ module Var = struct (* {{{ *)
     if lb > ub then invalid_arg "required: lb <= ub";
     let nvar = PB.make_integer_variable_proto
                  ~name ~domain:[Int64.of_int lb; Int64.of_int ub] ()
+    in
+    (m, DynArray.add_last variables nvar)
+
+  let new_int_from_domain ({ variables; _ } as m) domain name =
+    let nvar = PB.make_integer_variable_proto
+                 ~name ~domain:(Domain.flatten domain) ()
     in
     (m, DynArray.add_last variables nvar)
 
@@ -133,8 +206,6 @@ module Var = struct (* {{{ *)
          | _ -> assert false
 
   let pp fmt v = Format.pp_print_string fmt (to_string v)
-
-  (* TODO: richer domains? *)
 
 end (* }}} *)
 
@@ -242,14 +313,6 @@ module Constraint = struct (* {{{ *)
      | (_, [ (_, _v) ]) -> () (* should check that _v.ub = _v.lb... *)
      | _ -> invalid_arg "arg2 must be a (scaled) constant")
 
-  let check_domain =
-    let rec f = function
-      | [] -> ()
-      | lb :: ub :: xs when lb <= ub -> f xs
-      | _ -> invalid_arg "domain is not a list of ordered pairs"
-    in
-    f
-
   type t =
     | Or of Var.t_bool list
     | And of Var.t_bool list
@@ -260,7 +323,7 @@ module Constraint = struct (* {{{ *)
     | Mod of equality2
     | Prod of equality
     | Max of equality
-    | Linear of LinearExpr.t * int64 list
+    | Linear of LinearExpr.t * Domain.t
     | All_diff of LinearExpr.t list
     (* TODO:
     | Element of element_constraint_proto
@@ -280,8 +343,8 @@ module Constraint = struct (* {{{ *)
   let check = function
     | Div eq2 | Mod eq2 -> check_equality2 eq2
     | Prod eq | Max eq -> check_equality eq
-    | Or _ | And _ | At_most_one _ | Exactly_one _ | Xor _ | All_diff _ -> ()
-    | Linear (_, domain) -> check_domain domain
+    | Or _ | And _ | At_most_one _ | Exactly_one _ | Xor _ | All_diff _
+    | Linear (_, _) -> ()
 
   let not x = Var.neg x
   let bool_or bs = Or bs
@@ -334,7 +397,7 @@ module Constraint = struct (* {{{ *)
     PB.make_linear_constraint_proto
       ~coeffs:(List.map Int64.of_int coeffs)
       ~vars:(List.map Var.to_int32 vars)
-      ~domain:(List.map (fun b -> Int64.(sub b k)) domain)
+      ~domain:(List.map (fun b -> Int64.(sub b k)) (Domain.flatten domain))
       ()
 
   let to_proto = function
@@ -352,31 +415,35 @@ module Constraint = struct (* {{{ *)
         let exprs = List.map LinearExpr.to_proto exprs in
         PB.(All_diff (PB.make_all_different_constraint_proto ~exprs ()))
 
-  let of_expr expr ~lb ~ub = Linear (expr, Int64.[of_int lb; of_int ub])
+  let of_expr expr ~lb ~ub = Linear (expr, Domain.of_interval ~lb ~ub ())
+
+  let in_domain expr domain = Linear (expr, domain)
 
   let (==) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[of_int (-k); of_int (-k)])
+    Linear ((0, vs), Domain.of_values [-k])
 
   let (>=) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[of_int (-k); max_int])
+    Linear ((0, vs), Domain.of_interval ~lb:(-k) ())
 
   let (<=) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[min_int; of_int (-k)])
+    Linear ((0, vs), Domain.of_interval ~ub:(-k) ())
 
   let (>) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[of_int (-k + 1); max_int])
+    Linear ((0, vs), Domain.of_interval ~lb:(-k + 1) ())
 
   let (<) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[min_int; of_int (-k - 1)])
+    Linear ((0, vs), Domain.of_interval ~ub:(-k - 1) ())
 
   let (!=) lhs rhs =
     let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Int64.[min_int; of_int (-k - 1); of_int (-k + 1); max_int])
+    Linear ((0, vs), Domain.(of_interval ~ub:(-k - 1) ()
+                             @
+                             of_interval ~lb:(-k + 1) ()))
 
   let print_bounds fmt ~lb ~ub expr =
     if lb = Int64.min_int
@@ -388,28 +455,19 @@ module Constraint = struct (* {{{ *)
   let print_lt fmt expr domain =
     let rec f = function
       | [] -> ()
-      | [lb; ub] -> print_bounds fmt ~lb ~ub expr
-      | lb :: ub :: xs ->
+      | [(lb, ub)] -> print_bounds fmt ~lb ~ub expr
+      | (lb, ub) :: xs ->
           print_bounds fmt ~lb ~ub expr;
           Format.pp_print_string fmt " ||@ ";
           f xs
-      | _ -> assert false
     in
     Format.pp_open_hvbox fmt 4;
     f domain;
     Format.pp_close_box fmt ()
 
-  let print_list pp_v fmt =
-    let rec f = function
-    | [] -> ()
-    | [x] -> pp_v fmt x
-    | x::xs ->
-        Format.(pp_v fmt x; pp_print_char fmt ','; pp_print_space fmt (); f xs)
-    in
-    f
-
   let print_bool_op op fmt args =
-    Format.(fprintf fmt "%s(@[<hv>%a@])" op (print_list Var.pp) args)
+    Format.pp_print_string fmt op;
+    my_print_list Var.pp fmt '(' args ')'
 
   let print_equality2 op fmt { target; arg1; arg2 } =
     Format.(fprintf fmt "%a = @[<hv>%a %s@ %a@]"
@@ -419,13 +477,12 @@ module Constraint = struct (* {{{ *)
               LinearExpr.pp arg2)
 
   let print_equality op fmt { target; exprs } =
-    Format.(fprintf fmt "%a = %s(@[<hv>%a@])"
-              LinearExpr.pp target
-              op
-              (print_list LinearExpr.pp) exprs)
+    Format.fprintf fmt "%a = %s" LinearExpr.pp target op;
+    my_print_list LinearExpr.pp fmt '(' exprs ')'
 
   let print_op op fmt args =
-    Format.(fprintf fmt "%s(@[<hv>%a@])" op (print_list LinearExpr.pp) args)
+    Format.pp_print_string fmt op;
+    my_print_list LinearExpr.pp fmt '(' args ')'
 
   let pp fmt c =
     match c with
