@@ -1,0 +1,23 @@
+{0 OCaml interface for invoking Google OR-Tools}
+
+OR-Tools is an open source software suite for optimization, tuned for
+tackling the world's toughest problems in vehicle routing, flows, integer
+and linear programming, and constraint programming.
+
+This interface allows for calling the following solvers.  
+
+{table
+  {tr
+    {th Type}
+    {th Solver}
+    {th Interface}
+    {th Model}
+  }
+  {tr
+    {td Constraint Optimization}
+    {td {{:https://developers.google.com/optimization/cp}CP-SAT}}
+    {td {!module:Ortools_solvers.Sat}}
+    {td {!module:Ortools.Sat}}
+  }
+}
+

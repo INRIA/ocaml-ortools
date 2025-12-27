@@ -15,6 +15,9 @@
 
 module Sat : sig
 
+  (** Interface to {{:https://developers.google.com/optimization/cp}CP-SAT}. *)
+
+  (** Try to solve the given model. *)
   val solve : ?parameters:Ortools.Sat.Parameters.t
               -> Ortools.Sat.t
               -> Ortools.Sat.Response.t
