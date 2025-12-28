@@ -15,7 +15,6 @@ TODO:
 * reread cp_model.cc and double-check OCaml implementation
 * more samples
 * setup testing
-* C++ interface to solve to eliminate copy?
 
 ; on macOS
 ; LIBRARY_PATH=~/Downloads/software/or-tools_v9.12.4544/lib:$LIBRARY_PATH

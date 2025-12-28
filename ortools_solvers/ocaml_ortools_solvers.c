@@ -39,7 +39,11 @@ CAMLprim value ocaml_ortools_sat_solve(value vmodel, value vparams)
 
     if (cres == NULL) caml_failwith("Empty Solver Response");
 
-    // TODO: try to avoid double copy by reimplementing SolveCpModelWithParameters?
+    // The response is already copied inside SolveCpModelWithParameters.
+    // We could eliminate the extra copy below by reimplementing this
+    // interface in C++ based on ortools/sat/c_api/cp_solver_c.cc. The
+    // disadvantage is that it requires access to the OR-Tools header files,
+    // which are not necessarily distributed with the runtime.
     vresponse = caml_alloc_initialized_string(cres_len, cres);
     free(cres);
 
