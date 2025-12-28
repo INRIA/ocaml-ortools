@@ -36,6 +36,9 @@ provides OCaml wrappers for calling the OR-Tools solvers. It currently only
 supports the CP-SAT solver. Pull requests for other solvers are welcome.")
   (depends
     (odoc :with-doc)
+    (conf-wget :build)
+    (camlzip :build)
+    (dune-configurator :build)
     (ortools (>= 0.1))
     (ocaml (>= 4.14.2)))
 )
