@@ -2,7 +2,6 @@
   (name ortools)
   (public_name ortools)
   (synopsis "Build and export Google OR-Tools models")
-  (wrapped true)
   (modules sat cp_model sat_parameters)
   (libraries pbrt)
 )
