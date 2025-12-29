@@ -2,33 +2,69 @@
 
 **Currently only a subset of CP-SAT is supported.**
 
-(https://github.com/inria/ocaml-ortools/pulls)[Pull requests] providing the 
+[Pull requests](https://github.com/inria/ocaml-ortools/pulls) providing the 
 missing features are welcome, but please pay attention to documentation and 
 tests.
 
-TODO:
-* install and build instructions for macos/linux
-* Makefile
-  - download ortools binaries and install with OCaml interface?
-    (like Python does)
-  - update from proto files
-* reread cp_model.cc and double-check OCaml implementation
-* more samples
-* setup testing
+This project provides two packages:
 
-; on macOS
-; LIBRARY_PATH=~/Downloads/software/or-tools_v9.12.4544/lib:$LIBRARY_PATH
-; DYLD_LIBRARY_PATH=~/Downloads/software/or-tools_v9.12.4544/lib:$DYLD_LIBRARY_PATH
-;
-; see also: install_name_tool
+* `ortools` is an OCaml interface for building CP-SAT models. It does not 
+  require an installation of OR-Tools as it simply works with the protocol 
+  buffer format. See `utils/sat_solve_pb.{c,py}` for examples of interfacing 
+  with the CP-SAT solver.
 
-## Update Low-level Protocol Buffer Interface
+* `ortools_solvers` builds on `ortools` to provide a simple OCaml interface 
+  for calling CP-SAT. Building and installing it requires an OR-Tools 
+  installation (see below).
 
-Use (https://github.com/mransan/ocaml-protoc)[ocaml-protc] to generate the 
-low-level (https://protobuf.dev/)[Protocol Buffers] interfaces from the 
-OR-tools source.
+## Building with Google OR-Tools
 
-TODO: (https://github.com/mransan/ocaml-protoc/blob/master/doc/ocaml_extensions.md)[(ocaml_container) = repeated_field] extension?
+Ensure that `libortools.9.dylib` (macOS) or `libortools.so.9` (Linux), and 
+the other runtime libraries, are accessible by your compiler and loader.
+
+For example, on macOS, set the `LIBRARY_PATH` (for compilation) and 
+`DYLD_LIBRARY_PATH` (for execution) environment variables.
+
+On Linux, set the `LD_LIBRARY_PATH` (for compilation and execution) 
+environment variable.
+
+There are several options for obtaining the runtime libraries.
+
+- Download or build from source following the [official 
+  instructions](https://developers.google.com/optimization/install) (see the 
+  C++ section).
+
+- Install the Python libraires with `pip`. The OR-Tools runtime can be found 
+  in `site-packages/ortools/.libs`.
+
+- From the [or-tools releases on 
+  github](https://github.com/google/or-tools/releases),
+  download `Google.OrTools.runtime.<os>-<arch>.9.<minor>.<patch>.nupkg`
+  where os ∈ { linux, osx, win } and arch ∈ { arm64, x64 } and `unzip` it. 
+  The required files are in `runtimes/*/native`.
+
+I would have liked all this to be automatic, but:
+
+- There do not seem to be suitable brew/linux packages that could be linked 
+  from opam;
+
+- Vendoring the source in the opam package and building it on install is 
+  error-prone and resource-intensive;
+
+- Including several binary versions in the opam package is tedious to 
+  maintain and wasteful to download; and
+
+- Dynamically downloading the library on build is prevented by opam 
+  sandboxing (see the `download` branch for a prototype).
+
+## Protocol Buffer Interfaces
+
+The [Protocol Buffers](https://protobuf.dev/)
+interfaces have been generated with 
+[ocaml-protc](https://github.com/mransan/ocaml-protoc) (with
+[pull/263](https://github.com/mransan/ocaml-protoc/pull/263)).
+
+If required, they can be regenerated as follows.
 
 ```
 git clone git@github.com:google/or-tools.git
