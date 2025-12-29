@@ -6,6 +6,6 @@
   (foreign_stubs
     (language c)
     (names ocaml_ortools_solvers))
-  (c_library_flags (:include "download/flags.sexp"))
+  (c_library_flags (:include discover/flags.sexp))
   (libraries ortools)
 )

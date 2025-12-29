@@ -1,0 +1,10 @@
+
+(executable
+ (name discover)
+ (libraries dune-configurator))
+
+(rule
+ (targets flags.sexp)
+ (action (run ./discover.exe))
+)
+
