@@ -1,0 +1,16 @@
+
+(executable
+ (name download)
+ (libraries dune-configurator camlzip))
+
+(rule
+ (targets runtime.sexp flags.sexp (dir runtime))
+ (action (run ./download.exe))
+)
+
+(install
+  (section libexec)
+  (package ortools_solvers)
+  (files (include runtime.sexp))
+)
+

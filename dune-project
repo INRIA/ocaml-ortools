@@ -1,5 +1,7 @@
 (lang dune 3.20)
 (generate_opam_files true)
+(using directory-targets 0.1)
+(name ocaml-ortools)
 
 (maintainers "Timothy Bourke <tim@tbrk.org>")
 (authors "Timothy Bourke <tim@tbrk.org>")

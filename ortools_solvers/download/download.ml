@@ -6,6 +6,7 @@
    refs:
    - https://github.com/google/or-tools/releases
    - https://dune.readthedocs.io/en/latest/dune-libs.html#configurator
+   - https://github.com/ocaml/ocaml/pull/12405
    - odig doc dune-configurator
    - https://ocaml.org/cookbook/decompress-zip-archive/camlzip
  *)
@@ -61,23 +62,28 @@ let () =
       (* setup basic parameters *)
       let os = match C.ocaml_config_var_exn c "system" with
                | "macosx" -> "osx"
-               | os -> os
+               | "linux" -> "linux"
+               | "mingw64" | "win64" -> "win"
+               | _ -> "none"
       in
       let arch = match C.ocaml_config_var_exn c "architecture" with
                  | "amd64" -> "x64"
-                 | arch -> arch
+                 | "arm64" -> "arm64"
+                 | _ -> "none"
       in
       let file = nupkg_file os arch in
-      let dstdir = "ortools_lib" in
+      let dstdir = "runtime" in
 
       let lortools =
         if os = "osx" then sprintf "-lortools.%d" vmajor
         else sprintf "-l:libortools.so.%d" vmajor
       in
-      if C.c_test c main_empty ~link_flags:[lortools] then begin
-        (* already installed on the system *)
-        C.Flags.write_sexp "ortools_files.sexp" [];
-        C.Flags.write_sexp "ortools_flags.sexp" [lortools]
+      if C.c_test c main_empty ~link_flags:[lortools]
+         || os = "none" || arch = "none"
+      then begin
+        (* already installed on the system or not downloadable *)
+        C.Flags.write_sexp "runtime.sexp" [];
+        C.Flags.write_sexp "flags.sexp" [lortools]
       end
       else begin
         (* download and install with the package *)
@@ -96,8 +102,11 @@ let () =
           if not (C.Process.run_ok c fetch (extra_args @ [sprintf "%s/%s" nupkg_url file]))
           then failwith (sprintf "could not download %s/%s" nupkg_url file)
         end;
-        let unzipped = unzip (sprintf "runtimes/%s-%s/native/" os arch) file dstdir in
-        C.Flags.write_sexp "ortools_files.sexp" unzipped;
+        let unzipped =
+          unzip (sprintf "runtimes/%s-%s/native/" os arch) file dstdir
+          |> List.map (fun f -> sprintf "%s/%s" dstdir f)
+        in
+        C.Flags.write_sexp "runtime.sexp" unzipped;
         let build_flags = (* find the libraries when building *)
           [ sprintf "-L%s" F.(Sys.getcwd () ^ dstdir); lortools ]
         in
@@ -105,8 +114,8 @@ let () =
           match Sys.getenv_opt "OPAM_SWITCH_PREFIX" with
           | None -> [] (* use LD_LIBRARY_PATH or DYLD_LIBRARY_PATH *)
           | Some prefix ->
-              [ sprintf "-Wl,-rpath=%s" F.(prefix ^ "lib" ^ "ortools_solvers") ]
+              [ sprintf "-rpath %s" F.(prefix ^ "lib" ^ "ortools_solvers") ]
         in
-        C.Flags.write_sexp "ortools_flags.sexp" (build_flags @ rpath_flags)
+        C.Flags.write_sexp "flags.sexp" (build_flags @ rpath_flags)
       end)
 
