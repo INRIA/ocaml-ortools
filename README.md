@@ -17,6 +17,8 @@ This project provides two packages:
   for calling CP-SAT. Building and installing it requires an OR-Tools 
   installation (see below).
 
+Online docs: https://inria.github.io/ocaml-ortools/
+
 ## Building with Google OR-Tools
 
 Ensure that `libortools.9.dylib` (macOS) or `libortools.so.9` (Linux), and 
