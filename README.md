@@ -94,3 +94,40 @@ Cheat sheets
 4. in *ocaml_ortools-gh-pages*: `cp -r ../ocaml-ortools/_build/default/_doc/_html/* .`
 5. `git add`, `commit, `push`, etc.
 
+## TODOs
+
+* More sophisticated `Ortools_solvers` interface: write in C++, require 
+  OR-Tools headers.
+  - Support FeasibleSolutionObserver interface with callbacks into OCaml.
+  - Eliminate the redundant copy in `ocaml_ortools_sat_solve`.
+
+* Finish migrating OR-Tools `sat/samples`
+
+* Use `alcotest` to test the interface.
+
+* CP-SAT: Support `Interval` constraints
+
+* CP-SAT: Support `NoOverlap` constraints
+
+* CP-SAT: Support `NoOverlap2D` constraints
+
+* CP-SAT: Support `Element` constraints
+
+* CP-SAT: Support `Circuit` constraints
+
+* CP-SAT: Support `Routes` constraints
+
+* CP-SAT: Support `Table` constraints
+
+* CP-SAT: Support `Automaton` constraints
+
+* CP-SAT: Support `Inverse` constraints
+
+* CP-SAT: Support `Reservoir` constraints
+
+* CP-SAT: Support `Cumulative` constraints
+
+* CP-SAT: Support `Dummy` constraints
+
+* Support other solvers
+

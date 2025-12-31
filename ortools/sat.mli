@@ -257,10 +257,10 @@ module Constraint : sig (* {{{ *)
     | Inverse of inverse_constraint_proto
     | Reservoir of reservoir_constraint_proto
     | Interval of interval_constraint_proto
-    | No_overlap of no_overlap_constraint_proto
-    | No_overlap_2d of no_overlap2_dconstraint_proto
+    | NoOverlap of no_overlap_constraint_proto
+    | NoOverlap2D of no_overlap2_dconstraint_proto
     | Cumulative of cumulative_constraint_proto
-    | Dummy_constraint of list_of_variables_proto
+    | Dummy of list_of_variables_proto
     *)
 
   (** {!Max} with negated target and expressions.  *)
