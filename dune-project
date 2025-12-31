@@ -3,6 +3,8 @@
 (using directory-targets 0.1)
 (name ortools)
 
+(documentation "https://inria.github.io/ocaml-ortools/")
+
 (maintainers "Timothy Bourke <tim@tbrk.org>")
 (authors "Timothy Bourke <tim@tbrk.org>")
 (license Apache-2.0)
