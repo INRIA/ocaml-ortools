@@ -30,9 +30,9 @@ let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub "y" in
 let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub "z" in
 
 (* Add constraints. *)
-Ortools.Sat.(add model (2 * x + 7 * y + 3 * z <= 50));
-Ortools.Sat.(add model (3 * x - 5 * y + 7 * z <= 45));
-Ortools.Sat.(add model (5 * x + 2 * y - 6 * z <= 37));
+Ortools.Sat.(add model (2 * x + 7 * y + 3 * z <= of_int 50));
+Ortools.Sat.(add model (3 * x - 5 * y + 7 * z <= of_int 45));
+Ortools.Sat.(add model (5 * x + 2 * y - 6 * z <= of_int 37));
 
 (* Set objective. *) 
 Ortools.Sat.(maximize model (2 * x + 2 * y + 3 * z));

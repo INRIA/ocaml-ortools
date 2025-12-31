@@ -88,8 +88,9 @@ Cheat sheets
 
 ## Update the docs
 
-1. build the docs `dune build @doc`
-2. check out the `gh-pages` branch somewhere
-3. `cp -r ../ocaml-ortools/_build/default/_doc/_html/* .`
-4. `git add`, `commit, `push`, etc.
+1. in *ocaml-ortools*: build the docs `dune build @doc`
+2. check out the `gh-pages` branch to *ocaml-ortools-gh-pages*
+3. in *ocaml_ortools-gh-pages*: `rm -r index.html odoc.support ortools ortools_solvers`
+4. in *ocaml_ortools-gh-pages*: `cp -r ../ocaml-ortools/_build/default/_doc/_html/* .`
+5. `git add`, `commit, `push`, etc.
 
