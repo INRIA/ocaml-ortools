@@ -81,8 +81,8 @@ module Var : sig (* {{{ *)
   (** Add a new boolean variable to a model. *)
   val new_bool : model -> string -> t_bool
 
-  (** Negate a boolean literal. *)
-  val neg : t_bool -> t_bool
+  (** Complement a boolean literal. *)
+  val not : t_bool -> t_bool
 
   (** Create a new integer variable constrained to a given value. *)
   val new_constant : model -> int -> t_int
@@ -96,7 +96,7 @@ module Var : sig (* {{{ *)
   val to_bool : 'a t -> [`Bool] t
 
   (** Convert a variable to an integer variable.
-      Raises [Invalid_argument] on negated boolean literals. *)
+      Raises [Invalid_argument] on complemented boolean literals. *)
   val to_int  : 'a t -> [`Int] t
 
   (** Return a string representing the variable or boolean literal. *)
@@ -120,8 +120,14 @@ module LinearExpr : sig (* {{{ *)
       (see {!of_int}). *)
   type t
 
+  (** An empty linear expression. *)
+  val zero : t
+
+  (** A sum of linear expressions. *)
+  val sum : t list -> t
+
   (** A sum of variables: all coefficients are 1s. *)
-  val sum : 'a Var.t list -> t
+  val sum_vars : 'a Var.t list -> t
 
   (** A weighted sum of variables. *)
   val weighted_sum : (int * 'a Var.t) list -> t
@@ -147,30 +153,36 @@ module LinearExpr : sig (* {{{ *)
   (** Pretty-printer for linear expressions. *)
   val pp : Format.formatter -> t -> unit
 
-  module L :
-    sig
-      (** Operators for building linear expressions.
-          They are also available directly in the {!module:Sat} module. *)
+  module L : sig (* {{{ *)
+    (** Operators for building linear expressions.
+        They are also available directly in the {!module:Sat} module. *)
 
-      (** A single variable. *)
-      val var : 'a Var.t -> t
+    (** An empty linear expression. *)
+    val zero : t
 
-      (** A single term. *)
-      val ( * )  : int -> 'a Var.t -> t
+    (** A single variable. *)
+    val var : 'a Var.t -> t
 
-      (** Concatenatation of two linear expressions. *)
-      val ( + )  : t -> t -> t
+    (** A single term. *)
+    val ( * )  : int -> 'a Var.t -> t
 
-      (** Concatenatation of the left expression with the negation
-          of the right expression. *)
-      val ( - )  : t -> t -> t
+    (** Concatenatation of two linear expressions. *)
+    val ( + )  : t -> t -> t
 
-      (** Multiplication of a linear expression by a constant. *)
-      val scale  : int -> t -> t
+    (** Concatenatation of the left expression with the negation
+        of the right expression. *)
+    val ( - )  : t -> t -> t
 
-      (** A constant linear expression. *)
-      val of_int : int -> t
-    end
+    (** Multiplication of a linear expression by a constant. *)
+    val scale  : int -> t -> t
+
+    (** A constant linear expression. *)
+    val of_int : int -> t
+
+    (** Complement a boolean literal. Same as {!val:Var.nto}. *)
+    val not : Var.t_bool -> Var.t_bool
+
+  end (* }}} *)
 
 end (* }}} *)
 
@@ -259,9 +271,6 @@ module Constraint : sig (* {{{ *)
 
   (** {1:logical Logical Constraints} *)
 
-  (** Negate a boolean literal. Same as {!val:Var.neg}. *)
-  val not : Var.t_bool -> Var.t_bool
-
   (** At least one of the literals must be true. Same as {!Or}. *)
   val bool_or : Var.t_bool list -> t
 
@@ -283,8 +292,40 @@ module Constraint : sig (* {{{ *)
       Same as {!Or}. *)
   val at_least_one : Var.t_bool list -> t
 
+  module WithArray : sig (* {{{ *)
+    (** Constraints with arrays as arguments .  *)
+
+    (** At least one of the literals must be true. Same as {!Or}. *)
+    val bool_or : Var.t_bool array -> t
+
+    (** All literals must be true. Same as {!And}. *)
+    val bool_and : Var.t_bool array -> t
+
+    (** An odd number of literals is true. Same as {!Xor}. *)
+    val bool_xor : Var.t_bool array -> t
+
+    (** At most one literal is true. Sum literals <= 1.
+        Same as {!At_most_one}. *)
+    val at_most_one : Var.t_bool array -> t
+
+    (** Exactly one literal is true. Sum literals == 1.
+        Same as {!Exactly_one}. *)
+    val exactly_one : Var.t_bool array -> t
+
+    (** At least one of the literals must be true.
+        Same as {!Or}. *)
+    val at_least_one : Var.t_bool array -> t
+
+    (** Sum of an array of linear expressions. *)
+    val sum : LinearExpr.t array -> LinearExpr.t
+
+    (** Sum of an array of variables or boolean literals. *)
+    val vars : 'a Var.t array -> LinearExpr.t
+
+  end (* }}} *)
+
   (** Logical implication between two literals.
-      ([implication a b] is the same as [ Or [(Var.neg a); b] ].) *)
+      ([implication a b] is the same as [ Or [(Var.not a); b] ].) *)
   val implication : Var.t_bool -> Var.t_bool -> t
 
   (** {1:integer Integer Relations} *)
@@ -333,23 +374,27 @@ module Constraint : sig (* {{{ *)
 
   include module type of LinearExpr.L
 
-  (** A {!Linear} constraint: [lhs <= rhs]. *)
-  val (<=)    : LinearExpr.t -> LinearExpr.t -> t
+  module Linear : sig (* {{{ *)
 
-  (** A {!Linear} constraint: [lhs >= rhs]. *)
-  val (>=)    : LinearExpr.t -> LinearExpr.t -> t
+    (** A {!Linear} constraint: [lhs <= rhs]. *)
+    val (<=)    : LinearExpr.t -> LinearExpr.t -> t
 
-  (** A {!Linear} constraint: [lhs < rhs]. *)
-  val (<)     : LinearExpr.t -> LinearExpr.t -> t
+    (** A {!Linear} constraint: [lhs >= rhs]. *)
+    val (>=)    : LinearExpr.t -> LinearExpr.t -> t
 
-  (** A {!Linear} constraint: [lhs > rhs]. *)
-  val (>)     : LinearExpr.t -> LinearExpr.t -> t
+    (** A {!Linear} constraint: [lhs < rhs]. *)
+    val (<)     : LinearExpr.t -> LinearExpr.t -> t
 
-  (** A {!Linear} constraint: [lhs == rhs]. *)
-  val (==)    : LinearExpr.t -> LinearExpr.t -> t
+    (** A {!Linear} constraint: [lhs > rhs]. *)
+    val (>)     : LinearExpr.t -> LinearExpr.t -> t
 
-  (** A {!Linear} constraint: [lhs != rhs]. *)
-  val (!=)    : LinearExpr.t -> LinearExpr.t -> t
+    (** A {!Linear} constraint: [lhs == rhs]. *)
+    val (==)    : LinearExpr.t -> LinearExpr.t -> t
+
+    (** A {!Linear} constraint: [lhs != rhs]. *)
+    val (!=)    : LinearExpr.t -> LinearExpr.t -> t
+
+  end (* }}} *)
 
   (** {1:utility Utilities} *)
 
@@ -380,23 +425,7 @@ val add_implication :
   -> Var.t_bool list
   -> unit
 
-(** Place a constant upper-bound on a linear expression. *)
-val (<=)   : LinearExpr.t -> int -> Constraint.t
-
-(** Place a constant lower-bound on a linear expression. *)
-val (>=)   : LinearExpr.t -> int -> Constraint.t
-
-(** Place a strict constant upper-bound on a linear expression. *)
-val (<)    : LinearExpr.t -> int -> Constraint.t
-
-(** Place a strict constant lower-bound on a linear expression. *)
-val (>)    : LinearExpr.t -> int -> Constraint.t
-
-(** Require that a linear expression equals a constant. *)
-val (==)   : LinearExpr.t -> int -> Constraint.t
-
-(** Require that a linear expression does not equal a constant. *)
-val (!=)   : LinearExpr.t -> int -> Constraint.t
+include module type of Constraint.Linear
 
 (** {1:objectives Objectives} *)
 
@@ -424,6 +453,57 @@ val add_assumptions : model -> Var.t_bool list -> unit
 
 (** Clear any assumptions on boolean literals. *)
 val clear_assumptions : model -> unit
+
+(** {1:strategies Decision Strategies} *)
+
+(** Specifies branching decisions on variables. *)
+type variable_selection_strategy =
+  | ChooseFirst
+    (** The first variable in the list that is not fixed. *)
+  | ChooseLowestMin
+    (** The variable that might take the lowest value. *)
+  | ChooseHighestMax
+    (** The variable that might take the highest value. *)
+  | ChooseMinDomainSize
+    (** The variable having the fewest feasible assignments. *)
+  | ChooseMaxDomainSize
+    (** The variable having the most feasible assignments. *)
+
+(** Specifies branching decisions on domains. *)
+type domain_reduction_strategy =
+  | SelectMinValue
+    (** Try to assign the smallest value. *)
+  | SelectMaxValue
+    (** Try to assign the largest value. *)
+  | SelectLowerHalf
+    (** Branch to the lower half of the domain. *)
+  | SelectUpperHalf
+    (** Branch to the upper half of the domain. *)
+  | SelectMedianValue
+    (** Try to assign the median value. *)
+  | SelectRandomHalf
+    (** Randomly select either the lower or the upper half of the domain. *)
+
+(** Controls how the solver branches when no further deductions are possible.
+    The selection and reduction strategies are applied to the given list of
+    variables in order. Adding a new decision strategy replaces any existing
+    one. *)
+val add_decision_strategy :
+     model
+  -> 'a Var.t list
+  -> variable_selection_strategy
+  -> domain_reduction_strategy
+  -> unit
+
+(** Controls how the solver branches when no further deductions are possible.
+    The selection and reduction strategies are applied to the given list of
+    expressions. Adding a new decision strategy replaces any existing one. *)
+val add_decision_strategy_with_exprs :
+     model
+  -> LinearExpr.t list
+  -> variable_selection_strategy
+  -> domain_reduction_strategy
+  -> unit
 
 (** {1:solutions Solutions} *)
 
@@ -540,6 +620,12 @@ module Response : sig (* {{{ *)
 
   (** Convert from the protocol buffer response format. *)
   val of_proto : model -> Cp_model.cp_solver_response -> t
+
+  (** Convert from a protocol buffer decoder. *)
+  val pb_decode : model -> Pbrt.Decoder.t -> t
+
+  (** Read all the input data and decode. *)
+  val of_input : model -> in_channel -> t
 
 end (* }}} *)
 

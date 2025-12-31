@@ -15,6 +15,8 @@
 
 module PB = Cp_model
 
+let option_of_list ~map = function [] -> None | xs -> Some (map xs)
+
 (* Ersatz DynArray for OCaml < 5.2 *)
 module DynArray = struct (* {{{ *)
 
@@ -67,6 +69,7 @@ type t = {
   mutable objective   : PB.cp_objective_proto option;
   mutable hints       : (var * intval) list;
   mutable assumptions : int32 list;
+  mutable search_strategy : PB.decision_strategy_proto list;
 
   constant_to_index_map  : (intval, var) Hashtbl.t;
 }
@@ -164,10 +167,10 @@ module Var = struct (* {{{ *)
 
   let new_bool m name = new_int m name ~lb:0 ~ub:1
 
-  let neg (m, x) = (m, Int.neg x)
-
   let ref_is_positive ref = ref >= 0
   let negated_ref ref = (Int.neg ref) - 1
+
+  let not (m, x) = (m, negated_ref x)
 
   let to_index (_, ref) =
     if ref_is_positive ref then ref
@@ -215,6 +218,8 @@ module LinearExpr = struct (* {{{ *)
 
   type t = intval * (intval * [`Bool|`Int] Var.t) list
 
+  let zero = (0, [])
+
   let convert k (c, ((m, v) : 'a Var.t)) =
     if Var.ref_is_positive v
     then (k, (c, (m, v)))
@@ -222,7 +227,7 @@ module LinearExpr = struct (* {{{ *)
 
   let converts = List.fold_left_map convert 0
 
-  let sum = List.fold_left_map (fun k v -> convert k (1, v)) 0
+  let sum_vars = List.fold_left_map (fun k v -> convert k (1, v)) 0
 
   let weighted_sum = List.fold_left_map convert 0
 
@@ -259,6 +264,8 @@ module LinearExpr = struct (* {{{ *)
 
   module L = struct (* {{{ *)
 
+    let zero = zero
+
     let ( * ) c v = term (c, v)
 
     let ( + ) (k_l, vs_l) (k_r, vs_r) = (k_l + k_r, vs_l @ vs_r)
@@ -268,8 +275,11 @@ module LinearExpr = struct (* {{{ *)
     let var = var
     let scale = scale
     let of_int = of_int
+    let not = Var.not
 
   end (* }}} *)
+
+  let sum es = List.fold_right (fun e v -> L.(v + e)) es zero
 
   let to_proto (k, vs) =
     let coeffs, vars = List.split vs in
@@ -346,7 +356,6 @@ module Constraint = struct (* {{{ *)
     | Or _ | And _ | At_most_one _ | Exactly_one _ | Xor _ | All_diff _
     | Linear (_, _) -> ()
 
-  let not x = Var.neg x
   let bool_or bs = Or bs
   let bool_and bs = And bs
   let bool_xor bs = Xor bs
@@ -370,7 +379,28 @@ module Constraint = struct (* {{{ *)
 
   let at_least_one bs = Or bs
 
-  let implication a b = Or [Var.neg a; b]
+  module WithArray = struct
+
+    let bool_or bs = bool_or (Array.to_list bs)
+
+    let bool_and bs = bool_and (Array.to_list bs)
+
+    let bool_xor bs = bool_xor (Array.to_list bs)
+
+    let at_most_one bs = at_most_one (Array.to_list bs)
+
+    let exactly_one bs = exactly_one (Array.to_list bs)
+
+    let at_least_one bs = at_least_one (Array.to_list bs)
+
+    let sum es = Array.fold_right LinearExpr.L.(+) es LinearExpr.L.zero
+
+    let vars xs = Array.fold_right LinearExpr.L.(fun v e -> 1 * v + e)
+                    xs LinearExpr.L.zero
+
+  end
+
+  let implication a b = Or [Var.not a; b]
 
   let abs { target; exprs } =
     Max { target;
@@ -419,31 +449,35 @@ module Constraint = struct (* {{{ *)
 
   let in_domain expr domain = Linear (expr, domain)
 
-  let (==) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.of_values [-k])
+  module Linear = struct
 
-  let (>=) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.of_interval ~lb:(-k) ())
+    let (==) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.of_values [-k])
 
-  let (<=) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.of_interval ~ub:(-k) ())
+    let (>=) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.of_interval ~lb:(-k) ())
 
-  let (>) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.of_interval ~lb:(-k + 1) ())
+    let (<=) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.of_interval ~ub:(-k) ())
 
-  let (<) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.of_interval ~ub:(-k - 1) ())
+    let (>) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.of_interval ~lb:(-k + 1) ())
 
-  let (!=) lhs rhs =
-    let (k, vs) = LinearExpr.L.(lhs - rhs) in
-    Linear ((0, vs), Domain.(of_interval ~ub:(-k - 1) ()
-                             @
-                             of_interval ~lb:(-k + 1) ()))
+    let (<) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.of_interval ~ub:(-k - 1) ())
+
+    let (!=) lhs rhs =
+      let (k, vs) = LinearExpr.L.(lhs - rhs) in
+      Linear ((0, vs), Domain.(of_interval ~ub:(-k - 1) ()
+                               @
+                               of_interval ~lb:(-k + 1) ()))
+
+  end
 
   let print_bounds fmt ~lb ~ub expr =
     if lb = Int64.min_int
@@ -511,21 +545,21 @@ let make ?(nvars=10000) ?name () = {
   objective = None;
   hints = [];
   assumptions = [];
+  search_strategy = [];
   constant_to_index_map = Hashtbl.create (nvars / 10);
 }
 
 let to_proto { name; variables; constraints; objective;
-               hints; assumptions; constant_to_index_map = _ } =
+               hints; assumptions; search_strategy;
+               constant_to_index_map = _ } =
   let solution_hint =
-    match hints with
-    | [] -> None
-    | xs ->
+    option_of_list ~map:(fun xs ->
         let vars, values = List.split xs in
-        Some (PB.make_partial_variable_assignment
-                ~vars:(List.map Int32.of_int vars)
-                ~values:(List.map Int64.of_int values) ())
+        PB.make_partial_variable_assignment
+          ~vars:(List.map Int32.of_int vars)
+          ~values:(List.map Int64.of_int values) ()) hints
   in
-  let assumptions = match assumptions with [] -> None | xs -> Some xs in
+  let assumptions = option_of_list ~map:Fun.id assumptions in
   PB.make_cp_model_proto
     ?name
     ~variables:(DynArray.to_list variables)
@@ -533,6 +567,7 @@ let to_proto { name; variables; constraints; objective;
     ?objective
     ?solution_hint
     ?assumptions
+    ?search_strategy:(option_of_list ~map:Fun.id search_strategy)
     ()
 
 let pb_encode m enc = PB.encode_pb_cp_model_proto (to_proto m) enc
@@ -558,10 +593,14 @@ module Parameters =
 
 let add ({ constraints; _ } as m) ?name ?(only_enforce_if=[]) c =
   Constraint.check c;
-  let enforcement_literal =
-    match only_enforce_if with [] -> None | xs -> Some (List.map Var.to_int32 xs) in
   let constraint_ = Constraint.to_proto c in
-  let c = PB.make_constraint_proto ?name ?enforcement_literal ~constraint_ () in
+  let c = PB.make_constraint_proto
+    ?name
+    ?enforcement_literal:(option_of_list
+                            ~map:(fun xs -> List.map Var.to_int32 xs)
+                            only_enforce_if)
+    ~constraint_ ()
+  in
   m.constraints <- c :: constraints
 
 let add_implication m ?name lhs rhs =
@@ -595,169 +634,218 @@ let add_assumptions ({ assumptions; _ } as m) bs =
 let clear_assumptions m =
   m.assumptions <- []
 
-module Response =
-  struct
+type variable_selection_strategy =
+  | ChooseFirst
+  | ChooseLowestMin
+  | ChooseHighestMax
+  | ChooseMinDomainSize
+  | ChooseMaxDomainSize
 
-    type status =
-      | Unknown
-      | ModelInvalid
-      | Feasible
-      | Infeasible
-      | Optimal
+let variable_selection_strategy_to_proto = function
+  | ChooseFirst         -> PB.Choose_first
+  | ChooseLowestMin     -> PB.Choose_lowest_min
+  | ChooseHighestMax    -> PB.Choose_highest_max
+  | ChooseMinDomainSize -> PB.Choose_min_domain_size
+  | ChooseMaxDomainSize -> PB.Choose_max_domain_size
 
-    let string_of_status = function
-      | Unknown      -> "UNKNOWN"
-      | ModelInvalid -> "MODEL_INVALID"
-      | Feasible     -> "FEASIBLE"
-      | Infeasible   -> "INFEASIBLE"
-      | Optimal      -> "OPTIMAL"
+type domain_reduction_strategy =
+  | SelectMinValue
+  | SelectMaxValue
+  | SelectLowerHalf
+  | SelectUpperHalf
+  | SelectMedianValue
+  | SelectRandomHalf
 
-    type vardom = {
-      name : string;
-      domain : (int64 * int64) list;
+let domain_reduction_strategy_to_proto = function
+  | SelectMinValue    -> PB.Select_min_value
+  | SelectMaxValue    -> PB.Select_max_value
+  | SelectLowerHalf   -> PB.Select_lower_half
+  | SelectUpperHalf   -> PB.Select_upper_half
+  | SelectMedianValue -> PB.Select_median_value
+  | SelectRandomHalf  -> PB.Select_random_half
+
+let add_decision_strategy m vars varsel domred =
+  m.search_strategy <- [ PB.make_decision_strategy_proto
+   ~variables:(List.map Var.to_int32 vars)
+   ~variable_selection_strategy:(variable_selection_strategy_to_proto varsel)
+   ~domain_reduction_strategy:(domain_reduction_strategy_to_proto domred)
+   () ]
+
+let add_decision_strategy_with_exprs m exprs varsel domred =
+  m.search_strategy <- [ PB.make_decision_strategy_proto
+   ~exprs:(List.map LinearExpr.to_proto exprs)
+   ~variable_selection_strategy:(variable_selection_strategy_to_proto varsel)
+   ~domain_reduction_strategy:(domain_reduction_strategy_to_proto domred)
+   () ]
+
+module Response = struct (* {{{ *)
+
+  type status =
+    | Unknown
+    | ModelInvalid
+    | Feasible
+    | Infeasible
+    | Optimal
+
+  let string_of_status = function
+    | Unknown      -> "UNKNOWN"
+    | ModelInvalid -> "MODEL_INVALID"
+    | Feasible     -> "FEASIBLE"
+    | Infeasible   -> "INFEASIBLE"
+    | Optimal      -> "OPTIMAL"
+
+  type vardom = {
+    name : string;
+    domain : (int64 * int64) list;
+  }
+
+  type objective = {
+    terms                  : (int * Var.t_int) list;
+    offset                 : float;
+    scaling_factor         : float;
+    domain                 : (int64 * int64) list;
+    scaling_was_exact      : bool;
+    integer_before_offset  : int64;
+    integer_after_offset   : int64;
+    integer_scaling_factor : int64;
+  }
+
+  let int_of_int64 (x : int64) =
+     if Int64.of_int min_int <= x && x <= Int64.of_int max_int
+     then Int64.to_int x
+     else failwith "int64 is too big for int"
+
+  let rec make_domain = function
+    | [] -> []
+    | lb::ub::xs -> (lb, ub) :: make_domain xs
+    | _ -> failwith "domain is not a list of pairs"
+
+  let objective_of_proto m PB.{ _presence;
+                                vars;
+                                coeffs;
+                                offset;
+                                scaling_factor;
+                                domain;
+                                scaling_was_exact;
+                                integer_before_offset;
+                                integer_after_offset;
+                                integer_scaling_factor } =
+    {
+      terms =
+        List.map2 (fun c v -> (int_of_int64 c, (m, Int32.to_int v))) coeffs vars;
+      offset;
+      scaling_factor;
+      domain = make_domain domain;
+      scaling_was_exact;
+      integer_before_offset;
+      integer_after_offset;
+      integer_scaling_factor;
     }
 
-    type objective = {
-      terms                  : (int * Var.t_int) list;
-      offset                 : float;
-      scaling_factor         : float;
-      domain                 : (int64 * int64) list;
-      scaling_was_exact      : bool;
-      integer_before_offset  : int64;
-      integer_after_offset   : int64;
-      integer_scaling_factor : int64;
-    }
+  type t = {
+    status                                   : status;
+    solution                                 : int array;
+    objective_value                          : float;
+    best_objective_bound                     : float;
+    additional_solutions                     : int array list;
+    tightened_variables                      : vardom list;
+    sufficient_assumptions_for_infeasibility : Var.t_bool list;
+    integer_objective                        : objective option;
+    integer_objective_lower_bound            : int;
+    num_integers                             : int;
+    num_booleans                             : int;
+    num_fixed_booleans                       : int;
+    num_conflicts                            : int;
+    num_branches                             : int;
+    num_binary_propagations                  : int;
+    num_integer_propagations                 : int;
+    num_restarts                             : int;
+    num_lp_iterations                        : int;
+    wall_time                                : float;
+    user_time                                : float;
+    deterministic_time                       : float;
+    gap_integral                             : float;
+    solution_info                            : string;
+    solve_log                                : string;
+  }
 
-    let int_of_int64 (x : int64) =
-       if Int64.of_int min_int <= x && x <= Int64.of_int max_int
-       then Int64.to_int x
-       else failwith "int64 is too big for int"
+  let rec int_of_int64_seq xs () =
+    match xs with
+    | [] -> Seq.Nil
+    | x :: xs -> Seq.Cons (int_of_int64 x, int_of_int64_seq xs)
 
-    let rec make_domain = function
-      | [] -> []
-      | lb::ub::xs -> (lb, ub) :: make_domain xs
-      | _ -> failwith "domain is not a list of pairs"
+  let solution_array x = Array.of_seq (int_of_int64_seq x)
 
-    let objective_of_proto m PB.{ _presence;
-                                  vars;
-                                  coeffs;
-                                  offset;
-                                  scaling_factor;
-                                  domain;
-                                  scaling_was_exact;
-                                  integer_before_offset;
-                                  integer_after_offset;
-                                  integer_scaling_factor } =
-      {
-        terms =
-          List.map2 (fun c v -> (int_of_int64 c, (m, Int32.to_int v))) coeffs vars;
-        offset;
-        scaling_factor;
-        domain = make_domain domain;
-        scaling_was_exact;
-        integer_before_offset;
-        integer_after_offset;
-        integer_scaling_factor;
-      }
+  let make_vardom PB.{ _presence; name; domain } =
+    { name; domain = make_domain domain }
 
-    type t = {
-      status                                   : status;
-      solution                                 : int array;
-      objective_value                          : float;
-      best_objective_bound                     : float;
-      additional_solutions                     : int array list;
-      tightened_variables                      : vardom list;
-      sufficient_assumptions_for_infeasibility : Var.t_bool list;
-      integer_objective                        : objective option;
-      integer_objective_lower_bound            : int;
-      num_integers                             : int;
-      num_booleans                             : int;
-      num_fixed_booleans                       : int;
-      num_conflicts                            : int;
-      num_branches                             : int;
-      num_binary_propagations                  : int;
-      num_integer_propagations                 : int;
-      num_restarts                             : int;
-      num_lp_iterations                        : int;
-      wall_time                                : float;
-      user_time                                : float;
-      deterministic_time                       : float;
-      gap_integral                             : float;
-      solution_info                            : string;
-      solve_log                                : string;
-    }
+  let of_proto m PB.{ _presence;
+                      status;
+                      solution;
+                      objective_value;
+                      best_objective_bound;
+                      additional_solutions;
+                      tightened_variables;
+                      sufficient_assumptions_for_infeasibility;
+                      integer_objective;
+                      inner_objective_lower_bound;
+                      num_integers;
+                      num_booleans;
+                      num_fixed_booleans;
+                      num_conflicts;
+                      num_branches;
+                      num_binary_propagations;
+                      num_integer_propagations;
+                      num_restarts;
+                      num_lp_iterations;
+                      wall_time;
+                      user_time;
+                      deterministic_time;
+                      gap_integral;
+                      solution_info;
+                      solve_log;
+  } = {
+    status                      = (match status with
+                                   | PB.Unknown       -> Unknown
+                                   | PB.Model_invalid -> ModelInvalid
+                                   | PB.Feasible      -> Feasible
+                                   | PB.Infeasible    -> Infeasible
+                                   | PB.Optimal       -> Optimal);
+    solution                    = solution_array solution;
+    objective_value;
+    best_objective_bound;
+    additional_solutions        = List.map
+                                    (fun PB.{values} -> solution_array values)
+                                    additional_solutions;
+    tightened_variables         = List.map make_vardom tightened_variables;
+    sufficient_assumptions_for_infeasibility =
+      List.map (fun x -> (m, Int32.to_int x)) sufficient_assumptions_for_infeasibility;
+    integer_objective           = Option.map (objective_of_proto m) integer_objective;
+    integer_objective_lower_bound = int_of_int64 inner_objective_lower_bound;
+    num_integers                = int_of_int64 num_integers;
+    num_booleans                = int_of_int64 num_booleans;
+    num_fixed_booleans          = int_of_int64 num_fixed_booleans;
+    num_conflicts               = int_of_int64 num_conflicts;
+    num_branches                = int_of_int64 num_branches;
+    num_binary_propagations     = int_of_int64 num_binary_propagations;
+    num_integer_propagations    = int_of_int64 num_integer_propagations;
+    num_restarts                = int_of_int64 num_restarts;
+    num_lp_iterations           = int_of_int64 num_lp_iterations;
+    wall_time;
+    user_time;
+    deterministic_time;
+    gap_integral;
+    solution_info;
+    solve_log;
+  }
 
-    let rec int_of_int64_seq xs () =
-      match xs with
-      | [] -> Seq.Nil
-      | x :: xs -> Seq.Cons (int_of_int64 x, int_of_int64_seq xs)
+  let pb_decode m dec = of_proto m (PB.decode_pb_cp_solver_response dec)
 
-    let solution_array x = Array.of_seq (int_of_int64_seq x)
+  let of_input m fin =
+    let decoder = Pbrt.Decoder.of_string (In_channel.input_all fin) in
+    pb_decode m decoder
 
-    let make_vardom PB.{ _presence; name; domain } =
-      { name; domain = make_domain domain }
-
-    let of_proto m PB.{ _presence;
-                        status;
-                        solution;
-                        objective_value;
-                        best_objective_bound;
-                        additional_solutions;
-                        tightened_variables;
-                        sufficient_assumptions_for_infeasibility;
-                        integer_objective;
-                        inner_objective_lower_bound;
-                        num_integers;
-                        num_booleans;
-                        num_fixed_booleans;
-                        num_conflicts;
-                        num_branches;
-                        num_binary_propagations;
-                        num_integer_propagations;
-                        num_restarts;
-                        num_lp_iterations;
-                        wall_time;
-                        user_time;
-                        deterministic_time;
-                        gap_integral;
-                        solution_info;
-                        solve_log;
-    } = {
-      status                      = (match status with
-                                     | PB.Unknown       -> Unknown
-                                     | PB.Model_invalid -> ModelInvalid
-                                     | PB.Feasible      -> Feasible
-                                     | PB.Infeasible    -> Infeasible
-                                     | PB.Optimal       -> Optimal);
-      solution                    = solution_array solution;
-      objective_value;
-      best_objective_bound;
-      additional_solutions        = List.map
-                                      (fun PB.{values} -> solution_array values)
-                                      additional_solutions;
-      tightened_variables         = List.map make_vardom tightened_variables;
-      sufficient_assumptions_for_infeasibility =
-        List.map (fun x -> (m, Int32.to_int x)) sufficient_assumptions_for_infeasibility;
-      integer_objective           = Option.map (objective_of_proto m) integer_objective;
-      integer_objective_lower_bound = int_of_int64 inner_objective_lower_bound;
-      num_integers                = int_of_int64 num_integers;
-      num_booleans                = int_of_int64 num_booleans;
-      num_fixed_booleans          = int_of_int64 num_fixed_booleans;
-      num_conflicts               = int_of_int64 num_conflicts;
-      num_branches                = int_of_int64 num_branches;
-      num_binary_propagations     = int_of_int64 num_binary_propagations;
-      num_integer_propagations    = int_of_int64 num_integer_propagations;
-      num_restarts                = int_of_int64 num_restarts;
-      num_lp_iterations           = int_of_int64 num_lp_iterations;
-      wall_time;
-      user_time;
-      deterministic_time;
-      gap_integral;
-      solution_info;
-      solve_log;
-    }
-
-  end
+end (* }}} *)
 
 type raw_solver = parameters_pb:string -> model_pb:string -> string
 
@@ -784,10 +872,5 @@ let solve (raw_solver : raw_solver) ?parameters model =
   Response.of_proto model response
 
 include LinearExpr.L
-let (<=) x y  = Constraint.(x <= of_int y)
-let (>=) x y  = Constraint.(x >= of_int y)
-let (<)  x y  = Constraint.(x < of_int y)
-let (>)  x y  = Constraint.(x > of_int y)
-let (==) x y  = Constraint.(x == of_int y)
-let (!=) x y  = Constraint.(x != of_int y)
+include Constraint.Linear
 

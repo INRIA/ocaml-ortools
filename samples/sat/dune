@@ -1,4 +1,32 @@
 (executable
+ (name assignment_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name assignment_task_sizes_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name assignment_teams_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name assumptions_sample_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name binpacking_problem_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name channeling_sample_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
+ (name cp_is_fun_sat)
+ (libraries ortools ortools_solvers))
+
+(executable
  (name cp_sat_example)
  (libraries ortools ortools_solvers))
 

@@ -32,9 +32,9 @@ let main () =
   let z = CP.Var.new_int model ~lb:0 ~ub:var_upper_bound "z" in
 
   (* Creates the constraints. *)
-  CP.(add model (2 * x + 7 * y + 3 * z <= 50));
-  CP.(add model (3 * x - 5 * y + 7 * z <= 45));
-  CP.(add model (5 * x + 2 * y - 6 * z <= 37));
+  CP.(add model Constraint.(2 * x + 7 * y + 3 * z <= of_int 50));
+  CP.(add model Constraint.(3 * x - 5 * y + 7 * z <= of_int 45));
+  CP.(add model Constraint.(5 * x + 2 * y - 6 * z <= of_int 37));
 
   CP.(maximize model (2 * x + 2 * y + 3 * z));
 
