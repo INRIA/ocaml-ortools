@@ -77,3 +77,13 @@ ocaml-protoc --binary --pp --make --ml_out src/model \
     <path-to-or-tools>/ortools/sat/sat_parameters.proto
 ```
 
+## Development
+
+Cheat sheets
+
+### Release new version
+
+1. git tag -a <version> -m '...release notes...' --sign
+2. dune-release bistro
+
+
