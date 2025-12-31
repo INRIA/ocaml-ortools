@@ -179,7 +179,7 @@ module LinearExpr : sig (* {{{ *)
     (** A constant linear expression. *)
     val of_int : int -> t
 
-    (** Complement a boolean literal. Same as {!val:Var.nto}. *)
+    (** Complement a boolean literal. Same as {!val:Var.not}. *)
     val not : Var.t_bool -> Var.t_bool
 
   end (* }}} *)
@@ -367,7 +367,7 @@ module Constraint : sig (* {{{ *)
 
   (** {1:linear Linear Constraints} *)
 
-  (** A {!Linear} constraint: [of_expr e lb ub] means [lb <= e <= ub]. *)
+  (** A linear constraint: [of_expr e lb ub] means [lb <= e <= ub]. *)
   val of_expr : LinearExpr.t -> lb:int -> ub:int -> t
 
   val in_domain : LinearExpr.t -> Domain.t -> t
@@ -376,22 +376,22 @@ module Constraint : sig (* {{{ *)
 
   module Linear : sig (* {{{ *)
 
-    (** A {!Linear} constraint: [lhs <= rhs]. *)
+    (** A linear constraint: [lhs <= rhs]. *)
     val (<=)    : LinearExpr.t -> LinearExpr.t -> t
 
-    (** A {!Linear} constraint: [lhs >= rhs]. *)
+    (** A linear constraint: [lhs >= rhs]. *)
     val (>=)    : LinearExpr.t -> LinearExpr.t -> t
 
-    (** A {!Linear} constraint: [lhs < rhs]. *)
+    (** A linear constraint: [lhs < rhs]. *)
     val (<)     : LinearExpr.t -> LinearExpr.t -> t
 
-    (** A {!Linear} constraint: [lhs > rhs]. *)
+    (** A linear constraint: [lhs > rhs]. *)
     val (>)     : LinearExpr.t -> LinearExpr.t -> t
 
-    (** A {!Linear} constraint: [lhs == rhs]. *)
+    (** A linear constraint: [lhs == rhs]. *)
     val (==)    : LinearExpr.t -> LinearExpr.t -> t
 
-    (** A {!Linear} constraint: [lhs != rhs]. *)
+    (** A Linear constraint: [lhs != rhs]. *)
     val (!=)    : LinearExpr.t -> LinearExpr.t -> t
 
   end (* }}} *)

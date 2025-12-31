@@ -86,4 +86,10 @@ Cheat sheets
 1. git tag -a <version> -m '...release notes...' --sign
 2. dune-release bistro
 
+## Update the docs
+
+1. build the docs `dune build @doc`
+2. check out the `gh-pages` branch somewhere
+3. `cp -r ../ocaml-ortools/_build/default/_doc/_html/* .`
+4. `git add`, `commit, `push`, etc.
 
