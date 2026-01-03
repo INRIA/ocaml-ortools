@@ -34,7 +34,7 @@ There are several options for obtaining the runtime libraries.
 
 - Download or build from source following the [official 
   instructions](https://developers.google.com/optimization/install) (see the 
-  C++ section).
+  C++ section). See also the notes below.
 
 - Install the Python libraires with `pip`. The OR-Tools runtime can be found 
   in `site-packages/ortools/.libs`.
@@ -58,6 +58,35 @@ I would have liked all this to be automatic, but:
 
 - Dynamically downloading the library on build is prevented by opam 
   sandboxing (see the `download` branch for a prototype).
+
+### Personal experience of trying to build from source
+
+On macOS, install the required libraries:
+```
+brew install abseil protobuf re2 zlib bzip2 eigen@3
+```
+
+Then, in the OR-Tools source directory:
+```
+cmake -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \
+      -DBUILD_TESTING=OFF \
+      -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF \
+      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=OFF -DUSE_XPRESS=OFF \
+      -DUSE_GUROBI=ON \
+      -S . -B build
+cmake --build build --config Release -j -v
+```
+
+For me, this sufficed to build v9.12, but my attempts to build v9.13 or 
+v9.14 failed toward the end.
+
+On debian, the required libraries are:
+```
+sudo apt install libabsl-dev libprotobuf-dev libre2-dev libz-dev bzip2 libeigen3-dev
+```
+
+This suffices for cmake configuration to pass, but the build fails 
+immediately.
 
 ## Protocol Buffer Interfaces
 
