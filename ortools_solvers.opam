@@ -35,3 +35,24 @@ build: [
 ]
 dev-repo: "git+https://github.com/inria/ocaml-ortools.git"
 x-maintenance-intent: ["(latest)"]
+x-ci-accept-failures: [
+  "alpine-3.22"		# No OR-Tools package
+  "archlinux"		# No OR-Tools package
+  "centos-10"		# No OR-Tools package
+  "centos-9"		# No OR-Tools package
+  "debian-12"		# No OR-Tools package
+  "debian-13"		# No OR-Tools package
+  "debian-testing"	# No OR-Tools package
+  "debian-unstable"	# No OR-Tools package
+  "fedora-42"		# No OR-Tools package
+  "fedora-43"		# No OR-Tools package
+  "freebsd-14.3"	# No OR-Tools package
+  "macos-homebrew"	# No OR-Tools package
+  "opensuse-15.6"	# No OR-Tools package
+  "opensuse-16.0"	# No OR-Tools package
+  "opensuse-tumbleweed" # No OR-Tools package
+  "ubuntu-22.04"	# No OR-Tools package
+  "ubuntu-24.04"	# No OR-Tools package
+  "ubuntu-25.04"	# No OR-Tools package
+  "ubuntu-25.10"	# No OR-Tools package
+]
