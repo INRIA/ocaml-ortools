@@ -326,15 +326,15 @@ module Constraint = struct (* {{{ *)
   type t =
     | Or of Var.t_bool list
     | And of Var.t_bool list
-    | At_most_one of Var.t_bool list
-    | Exactly_one of Var.t_bool list
+    | AtMostOne of Var.t_bool list
+    | ExactlyOne of Var.t_bool list
     | Xor of Var.t_bool list
     | Div of equality2
     | Mod of equality2
     | Prod of equality
     | Max of equality
     | Linear of LinearExpr.t * Domain.t
-    | All_diff of LinearExpr.t list
+    | AllDiff of LinearExpr.t list
     (* TODO:
     | Element of element_constraint_proto
     | Circuit of circuit_constraint_proto
@@ -353,14 +353,14 @@ module Constraint = struct (* {{{ *)
   let check = function
     | Div eq2 | Mod eq2 -> check_equality2 eq2
     | Prod eq | Max eq -> check_equality eq
-    | Or _ | And _ | At_most_one _ | Exactly_one _ | Xor _ | All_diff _
+    | Or _ | And _ | AtMostOne _ | ExactlyOne _ | Xor _ | AllDiff _
     | Linear (_, _) -> ()
 
   let bool_or bs = Or bs
   let bool_and bs = And bs
   let bool_xor bs = Xor bs
-  let at_most_one bs = At_most_one bs
-  let exactly_one bs = Exactly_one bs
+  let at_most_one bs = AtMostOne bs
+  let exactly_one bs = ExactlyOne bs
   let multiplication_equality x exprs =
     Prod { target = LinearExpr.var x; exprs }
   let division_equality x e c =
@@ -369,7 +369,7 @@ module Constraint = struct (* {{{ *)
     Mod { target = LinearExpr.var x; arg1 = e; arg2 = LinearExpr.of_int c }
   let max_equality x exprs =
     Max { target = LinearExpr.var x; exprs }
-  let all_different exprs = All_diff exprs
+  let all_different exprs = AllDiff exprs
 
   let min { target; exprs } =
     Max { target = LinearExpr.scale (-1) target;
@@ -433,15 +433,15 @@ module Constraint = struct (* {{{ *)
   let to_proto = function
     | Or bs  -> PB.(Bool_or (make_bool_argument_proto ~literals:(int32 bs) ()))
     | And bs -> PB.(Bool_and (make_bool_argument_proto ~literals:(int32 bs) ()))
-    | At_most_one bs -> PB.(At_most_one (make_bool_argument_proto ~literals:(int32 bs) ()))
-    | Exactly_one bs -> PB.(Exactly_one (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | AtMostOne bs -> PB.(At_most_one (make_bool_argument_proto ~literals:(int32 bs) ()))
+    | ExactlyOne bs -> PB.(Exactly_one (make_bool_argument_proto ~literals:(int32 bs) ()))
     | Xor bs  -> PB.(Bool_xor (make_bool_argument_proto ~literals:(int32 bs) ()))
     | Div eq2 -> PB.(Int_div (equality2_proto eq2))
     | Mod eq2 -> PB.(Int_mod (equality2_proto eq2))
     | Prod eq -> PB.(Int_prod (equality_proto eq))
     | Max eq  -> PB.(Lin_max (equality_proto eq))
     | Linear (expr, domain) -> PB.(Linear (lt_to_proto expr domain))
-    | All_diff exprs ->
+    | AllDiff exprs ->
         let exprs = List.map LinearExpr.to_proto exprs in
         PB.(All_diff (PB.make_all_different_constraint_proto ~exprs ()))
 
@@ -522,15 +522,15 @@ module Constraint = struct (* {{{ *)
     match c with
     | Or bs -> print_bool_op "or" fmt bs
     | And bs -> print_bool_op "and" fmt bs
-    | At_most_one bs -> print_bool_op "at_most_one" fmt bs
-    | Exactly_one bs -> print_bool_op "exactly_one" fmt bs
+    | AtMostOne bs -> print_bool_op "at_most_one" fmt bs
+    | ExactlyOne bs -> print_bool_op "exactly_one" fmt bs
     | Xor bs -> print_bool_op "xor" fmt bs
     | Div eq2 -> print_equality2 "//" fmt eq2
     | Mod eq2 -> print_equality2 "%" fmt eq2
     | Prod eq -> print_equality "prod" fmt eq
     | Max eq -> print_equality "max" fmt eq
     | Linear (expr, domain) -> print_lt fmt expr domain
-    | All_diff exprs -> print_op "all_diff" fmt exprs
+    | AllDiff exprs -> print_op "all_diff" fmt exprs
 
   let to_string e = Format.asprintf "%a" pp e
 

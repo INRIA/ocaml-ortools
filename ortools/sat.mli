@@ -226,9 +226,9 @@ module Constraint : sig (* {{{ *)
       (** At least one of the literals must be true. *)
     | And of Var.t_bool list
       (** All literals must be true. *)
-    | At_most_one of Var.t_bool list
+    | AtMostOne of Var.t_bool list
       (** At most one literal is true. Sum literals <= 1. *)
-    | Exactly_one of Var.t_bool list
+    | ExactlyOne of Var.t_bool list
       (** Exactly one literal is true. Sum literals == 1. *)
     | Xor of Var.t_bool list
       (** An odd number of literals is true. *)
@@ -245,7 +245,7 @@ module Constraint : sig (* {{{ *)
       (** Constrains a {{!LinearExpr.t}linear expression} to a domain.
           Values of type [Linear of lt] are created by the {!(<=)}, {!(==)},
           and similar operators. *)
-    | All_diff of LinearExpr.t list
+    | AllDiff of LinearExpr.t list
     (** Require that a list of (scaled) variables and constants have
         different values from each other. *)
     (* TODO:
