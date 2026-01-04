@@ -63,7 +63,7 @@ I would have liked all this to be automatic, but:
 
 On macOS, install the required libraries:
 ```
-brew install abseil protobuf re2 zlib bzip2 eigen@3
+brew install abseil protobuf protobuf-c re2 zlib bzip2 eigen@3
 ```
 
 Then, in the OR-Tools source directory:
@@ -71,22 +71,23 @@ Then, in the OR-Tools source directory:
 cmake -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \
       -DBUILD_TESTING=OFF \
       -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF \
-      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=OFF -DUSE_XPRESS=OFF \
+      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=ON -DUSE_XPRESS=OFF \
       -DUSE_GUROBI=ON \
       -S . -B build
 cmake --build build --config Release -j -v
 ```
 
 For me, this sufficed to build v9.12, but my attempts to build v9.13 or 
-v9.14 failed toward the end.
+v9.14 failed due to changes in Abseil around absl:Nonnull. It was possible 
+however to build the main branch (62fbfbc55e71d67217b08eebfdc268646ae2c41a).
+The `USE_GUROBI` and `USE_GLOP` options are needed to avoid missing symbols 
+errors during linking.
 
 On debian, the required libraries are:
 ```
-sudo apt install libabsl-dev libprotobuf-dev libre2-dev libz-dev bzip2 libeigen3-dev
+sudo apt install libabsl-dev protobuf-compiler libprotobuf-c-dev \
+                 libre2-dev libz-dev libbz2-dev libeigen3-dev
 ```
-
-This suffices for cmake configuration to pass, but the build fails 
-immediately.
 
 ## Protocol Buffer Interfaces
 
