@@ -13,11 +13,34 @@ license: "Apache-2.0"
 homepage: "https://github.com/inria/ocaml-ortools"
 bug-reports: "https://github.com/inria/ocaml-ortools/issues"
 depends: [
+  "ortools"
   "dune" {>= "3.20"}
-  "ortools" {>= "0.1"}
-  "dune-configurator" {build}
-  "ocaml" {>= "4.14.2"}
   "odoc" {with-doc}
+]
+depexts: [
+  ["abseil"] {os = "macos" & os-distribution = "homebrew"}
+  ["protobuf"] {os = "macos" & os-distribution = "homebrew"}
+  ["protobuf-c"] {os = "macos" & os-distribution = "homebrew"}
+  ["re2"] {os = "macos" & os-distribution = "homebrew"}
+  ["zlib"] {os = "macos" & os-distribution = "homebrew"}
+  ["bzip2"] {os = "macos" & os-distribution = "homebrew"}
+  ["eigen@3"] {os = "macos" & os-distribution = "homebrew"}
+
+  ["libabsl-dev"] {os-distribution = "debian"}
+  ["protobuf-compiler"] {os-distribution = "debian"}
+  ["libprotobuf-c-dev"] {os-distribution = "debian"}
+  ["libre2-dev"] {os-distribution = "debian"}
+  ["libz-dev"] {os-distribution = "debian"}
+  ["libbz2-dev"] {os-distribution = "debian"}
+  ["libeigen3-dev"] {os-distribution = "debian"}
+
+  ["libabsl-dev"] {os-distribution = "ubuntu"}
+  ["protobuf-compiler"] {os-distribution = "ubuntu"}
+  ["libprotobuf-c-dev"] {os-distribution = "ubuntu"}
+  ["libre2-dev"] {os-distribution = "ubuntu"}
+  ["libz-dev"] {os-distribution = "ubuntu"}
+  ["libbz2-dev"] {os-distribution = "ubuntu"}
+  ["libeigen3-dev"] {os-distribution = "ubuntu"}
 ]
 build: [
   ["dune" "subst"] {dev}

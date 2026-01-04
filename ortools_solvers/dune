@@ -6,6 +6,38 @@
   (foreign_stubs
     (language c)
     (names ocaml_ortools_solvers))
-  (c_library_flags (:include discover/flags.sexp))
+  (c_library_flags -lortools)
   (libraries ortools)
+  (foreign_archives ortools.9.14 ortools.9 ortools)
 )
+
+(data_only_dirs libortools)
+
+(rule
+  (enabled_if (= %{ocaml-config:system} macosx))
+  (deps (source_tree libortools))
+  (targets libortools.9.14.dylib libortools.9.dylib libortools.dylib)
+  (action (no-infer (progn
+    (chdir libortools (progn
+       (run cmake -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF -DBUILD_TESTING=OFF -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=ON -DUSE_XPRESS=OFF -DUSE_GUROBI=ON -S . -B build)
+       (run cmake --build build --config Release -j -v)))
+    (copy libortools/build/lib/libortools.9.14.dylib libortools.9.14.dylib)
+    (copy libortools/build/lib/libortools.9.dylib libortools.9.dylib)
+    (copy libortools/build/lib/libortools.dylib libortools.dylib)
+  )))
+)
+
+(rule
+  (enabled_if (<> %{ocaml-config:system} macosx))
+  (deps (source_tree libortools))
+  (targets libortools.9.14.dylib libortools.9.dylib libortools.dylib)
+  (action (no-infer (progn
+    (chdir libortools (progn
+       (run cmake -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF -DBUILD_TESTING=OFF -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=ON -DUSE_XPRESS=OFF -DUSE_GUROBI=ON -S . -B build)
+       (run cmake --build build --config Release -j -v)))
+    (copy libortools/build/lib/libortools.9.14.dylib libortools.9.14.dylib)
+    (copy libortools/build/lib/libortools.9.dylib libortools.9.dylib)
+    (copy libortools/build/lib/libortools.dylib libortools.dylib)
+  )))
+)
+
