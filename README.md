@@ -24,11 +24,11 @@ Online docs: https://inria.github.io/ocaml-ortools/
 Ensure that `libortools.9.dylib` (macOS) or `libortools.so.9` (Linux), and 
 the other runtime libraries, are accessible by your compiler and loader.
 
-For example, on macOS, set the `LIBRARY_PATH` (for compilation) and 
+For example, on macOS, set `LIBRARY_PATH` (for compilation) and 
 `DYLD_LIBRARY_PATH` (for execution) environment variables.
 
-On Linux, set the `LD_LIBRARY_PATH` (for compilation and execution) 
-environment variable.
+On Linux, set `LIBRARY_PATH` (for compilation) and `LD_LIBRARY_PATH` (for 
+execution) environment variables.
 
 There are several options for obtaining the runtime libraries.
 
@@ -183,7 +183,7 @@ If required, they can be regenerated as follows.
 ```
 git clone git@github.com:google/or-tools.git
 cd or-tools
-git checkout v9.14      % TODO: update with required version
+git checkout v9.15      % TODO: update with required version
 opam install ocaml-protoc
 ocaml-protoc --binary --pp --make --ml_out src/model \
     <path-to-or-tools>/ortools/sat/cp_model.proto

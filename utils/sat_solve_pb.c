@@ -27,16 +27,27 @@ export LD_LIBRARY_PATH="$ORTOOLS:$LD_LIBRARY_PATH"
 
 ./sat_solve_pb -p parameters.pb model.pb -o response.pb
 
-// 2. Download OR-Tools from Github for macOS arm64
+// 2a. Download OR-Tools from Github for macOS arm64
 
-wget https://github.com/google/or-tools/releases/download/v9.14/Google.OrTools.runtime.osx-arm64.9.14.6206.nupkg
-unzip Google.OrTools.runtime.osx-arm64.9.14.6206.nupkg \
+wget https://github.com/google/or-tools/releases/download/v9.15/Google.OrTools.runtime.osx-arm64.9.15.6755.nupkg
+unzip Google.OrTools.runtime.osx-arm64.9.15.6755.nupkg \
      'runtimes/osx-arm64/native/*' \
      -d 'ortools'
   
 export ORTOOLS_LIBS=$(realpath ./ortools/runtimes/osx-arm64/native)
 cc -o sat_solve_pb -L "$ORTOOLS_LIBS" sat_solve_pb.c -lortools.9
 DYLD_LIBRARY_PATH="$ORTOOLS_LIBS:$DYLD_LIBRARY_PATH" ./sat_solve_pb ...
+// (or specify the rpath when compiling: -Wl,-rpath,"$ORTOOLS"
+
+// 2b. Download OR-Tools from Github for linux x64
+wget https://github.com/google/or-tools/releases/download/v9.15/Google.OrTools.runtime.linux-x64.9.15.6755.nupkg
+unzip Google.OrTools.runtime.linux-x64.9.15.6755.nupkg \
+     'runtimes/linux-x64/native/*' \
+     -d 'ortools'
+
+export ORTOOLS_LIBS=$(realpath ./ortools/runtimes/linux-x64/native)
+cc -o sat_solve_pb -L "$ORTOOLS_LIBS" sat_solve_pb.c -l:libortools.so.9
+LD_LIBRARY_PATH="$ORTOOLS_LIBS:$LD_LIBRARY_PATH" ./sat_solve_pb ...
 // (or specify the rpath when compiling: -Wl,-rpath,"$ORTOOLS"
 
 #endif
