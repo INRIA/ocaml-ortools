@@ -19,7 +19,47 @@ This project provides two packages:
 
 Online docs: https://inria.github.io/ocaml-ortools/
 
-## Building with Google OR-Tools
+## Building with Google OR-Tools (only required for ortools_solvers)
+
+### TLDR Linux (X86_64)
+
+```
+wget https://github.com/google/or-tools/releases/download/v9.15/Google.OrTools.runtime.linux-x64.9.15.6755.nupkg
+unzip Google.OrTools.runtime.linux-x64.9.15.6755.nupkg \
+      'runtimes/linux-x64/native/*' \
+      -d 'ortools'
+export ORTOOLS_LIBS=$(realpath ./ortools/runtimes/linux-x64/native)
+LIBRARY_PATH="$ORTOOLS_LIBS:$LIBRARY_PATH"
+LD_LIBRARY_PATH="$ORTOOLS_LIBS:$LD_LIBRARY_PATH"
+```
+
+### TLDR macOS (arm64)
+
+```
+wget https://github.com/google/or-tools/releases/download/v9.15/Google.OrTools.runtime.osx-arm64.9.15.6755.nupkg
+unzip Google.OrTools.runtime.osx-arm64.9.15.6755.nupkg \
+     'runtimes/osx-arm64/native/*' \
+     -d 'ortools'
+export ORTOOLS_LIBS=$(realpath ./ortools/runtimes/osx-arm64/native)
+LIBRARY_PATH="$ORTOOLS_LIBS:$LIBRARY_PATH"
+DYLD_LIBRARY_PATH="$ORTOOLS_LIBS:$DYLD_LIBRARY_PATH"
+```
+
+### More Detailed Instructions
+
+Obtain the runtime libraries:
+
+- _Option 1:_ From the [or-tools releases on 
+  github](https://github.com/google/or-tools/releases),
+  download `Google.OrTools.runtime.<os>-<arch>.9.<minor>.<patch>.nupkg`
+  where os ∈ { linux, osx, win } and arch ∈ { arm64, x64 } and `unzip` it. 
+  The required files are in `runtimes/*/native`.
+
+- _Option 2 (more difficult than it may seem):_ Download or build from 
+  source following the [official instructions](https://developers.google.com/optimization/install) (see the C++ section). See also the notes below.
+
+- _Option 3 (involves Python):_ Install the Python libraires with `pip`. The 
+  OR-Tools runtime can be found in `site-packages/ortools/.libs`.
 
 Ensure that `libortools.9.dylib` (macOS) or `libortools.so.9` (Linux), and 
 the other runtime libraries, are accessible by your compiler and loader.
@@ -30,28 +70,14 @@ For example, on macOS, set `LIBRARY_PATH` (for compilation) and
 On Linux, set `LIBRARY_PATH` (for compilation) and `LD_LIBRARY_PATH` (for 
 execution) environment variables.
 
-There are several options for obtaining the runtime libraries.
-
-- Download or build from source following the [official 
-  instructions](https://developers.google.com/optimization/install) (see the 
-  C++ section). See also the notes below.
-
-- Install the Python libraires with `pip`. The OR-Tools runtime can be found 
-  in `site-packages/ortools/.libs`.
-
-- From the [or-tools releases on 
-  github](https://github.com/google/or-tools/releases),
-  download `Google.OrTools.runtime.<os>-<arch>.9.<minor>.<patch>.nupkg`
-  where os ∈ { linux, osx, win } and arch ∈ { arm64, x64 } and `unzip` it. 
-  The required files are in `runtimes/*/native`.
-
 I would have liked all this to be automatic, but:
 
 - There do not seem to be suitable brew/linux packages that could be linked 
   from opam;
 
 - Vendoring the source in the opam package and building it on install is 
-  error-prone and resource-intensive;
+  error-prone and resource-intensive (see notes below and also an attempt in 
+  the `vendoring` branch);
 
 - Including several binary versions in the opam package is tedious to 
   maintain and wasteful to download; and
