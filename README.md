@@ -59,7 +59,7 @@ I would have liked all this to be automatic, but:
 - Dynamically downloading the library on build is prevented by opam 
   sandboxing (see the `download` branch for a prototype).
 
-### Personal experience of trying to build from source
+### Building from source on macOS
 
 On macOS, install the required libraries:
 ```
@@ -83,11 +83,80 @@ however to build the main branch (62fbfbc55e71d67217b08eebfdc268646ae2c41a).
 The `USE_GUROBI` and `USE_GLOP` options are needed to avoid missing symbols 
 errors during linking.
 
-On debian, the required libraries are:
+### Building from source on Debian 13.3
+
+For the Abseil library, Debian packages provides `libabsl-dev` version 
+20240722, but OR-Tools v9.15 requires version 20250814.
+
+For Protocol Buffers, Debian packages provides `protobuf-compiler` and 
+`libprotobuf-c-dev` v3.21.12, but OR-Tools v9.15 requires version v33.1.
+
+Protocol Buffers requires RE2, which Debian provides as a package 
+`libre2-dev`, but this library also depends on Abseil, so if Abseil is 
+rebuilt, then RE2 must also be rebuilt.
+
+Otherwise the packages `libz-dev`, `libbz2-dev`, and `libeigen3-dev` are 
+required.
+
+Download the OR-Tools and Abseil source:
 ```
-sudo apt install libabsl-dev protobuf-compiler libprotobuf-c-dev \
-                 libre2-dev libz-dev libbz2-dev libeigen3-dev
+git clone --depth 1 --branch v9.15 https://github.com/google/or-tools.git
+cd or-tools
+git clone --depth 1 --branch 20250814.1 https://github.com/abseil/abseil-cpp.git
+
 ```
+
+Add the following lines at the top of `abseil-cpp/CMakeLists.txt`:
+
+```
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+```
+
+Edit `cmake/dependencies/CMakeLists.txt` by replacing
+```
+  FetchContent_Declare(
+    absl
+    GIT_REPOSITORY "https://github.com/abseil/abseil-cpp.git"
+    GIT_TAG "20250814.1"
+    GIT_SHALLOW TRUE
+    UPDATE_COMMAND git reset --hard
+    PATCH_COMMAND git apply --ignore-whitespace
+    "${CMAKE_CURRENT_LIST_DIR}/../../patches/abseil-cpp-20250814.1.patch"
+    OVERRIDE_FIND_PACKAGE
+    SYSTEM
+  )
+```
+with
+```
+  FetchContent_Declare(
+    absl
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/abseil-cpp"
+  )
+```
+
+Build with the following commands:
+```
+cmake -DCMAKE_CXX_STANDARD=20 \
+      -DBUILD_absl=ON -DBUILD_Protobuf=ON -DBUILD_re2=ON \
+      -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \ 
+      -DBUILD_TESTING=OFF -DBUILD_MATH_OPT=ON \
+      -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF \
+      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_XPRESS=OFF \
+      -DUSE_GLOP=ON -DUSE_GUROBI=ON \
+      -S . -B build
+cmake --build build --config Release -j 16 -v
+```
+The options `USE_GLOP` and `USE_GUROBI` must be set to avoid linking errors. 
+Compiling with `USE_GUROBI` requires that `USE_MATHOPT` be set.
+
+All of this is quite horrible. What's more, in terms of packaging the 
+binaries with opam, in addition to `libortools.so`, one would have to 
+include a subset of the 180 `libabsl_*.so` files, `libre2.so`, and one or 
+all of `libprotobuf-lite.so`, `libprotobuf.so`, `libprotoc.so`. This could 
+lead to conflicts with other current or future OCaml packages that 
+dynamically load, directly or indirectly, the Abseil, RE2, or Protocol 
+Buffer libraries.
 
 ## Protocol Buffer Interfaces
 
