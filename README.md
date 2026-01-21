@@ -59,11 +59,27 @@ I would have liked all this to be automatic, but:
 - Dynamically downloading the library on build is prevented by opam 
   sandboxing (see the `download` branch for a prototype).
 
-### Building from source on macOS
+### Building from source on macOS 26.2
 
 On macOS, install the required libraries:
 ```
 brew install abseil protobuf protobuf-c re2 zlib bzip2 eigen@3
+```
+
+I tested against the following versions:
+```
+abseil      20260107.0
+protobuf    33.4
+protobuf-c  1.5.2
+re2         2025-11-05
+zlib        1.3.1
+bzip2       1.0.8
+eigen@3     3.4.1
+```
+
+Download the OR-Tools source:
+```
+git clone --depth 1 --branch v9.15 https://github.com/google/or-tools.git
 ```
 
 Then, in the OR-Tools source directory:
@@ -71,15 +87,11 @@ Then, in the OR-Tools source directory:
 cmake -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \
       -DBUILD_TESTING=OFF \
       -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF \
-      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_GLOP=ON -DUSE_XPRESS=OFF \
-      -DUSE_GUROBI=ON \
+      -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_XPRESS=OFF \
+      -DUSE_GLOP=ON -DUSE_GUROBI=ON \
       -S . -B build
 cmake --build build --config Release -j -v
 ```
-
-For me, this sufficed to build v9.12, but my attempts to build v9.13 or 
-v9.14 failed due to changes in Abseil around absl:Nonnull. It was possible 
-however to build the main branch (62fbfbc55e71d67217b08eebfdc268646ae2c41a).
 The `USE_GUROBI` and `USE_GLOP` options are needed to avoid missing symbols 
 errors during linking.
 
@@ -149,6 +161,7 @@ cmake --build build --config Release -j 16 -v
 ```
 The options `USE_GLOP` and `USE_GUROBI` must be set to avoid linking errors. 
 Compiling with `USE_GUROBI` requires that `USE_MATHOPT` be set.
+(I needed `-j 16` to stop my build machine from freezing on errors.)
 
 All of this is quite horrible. What's more, in terms of packaging the 
 binaries with opam, in addition to `libortools.so`, one would have to 
