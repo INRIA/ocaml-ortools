@@ -1,0 +1,45 @@
+
+(executable
+  (name gen_libortools_inc)
+  (modules gen_libortools_inc)
+  (libraries sexplib0 csexp))
+
+(subdir libortools-build
+  (rule
+    (deps (file build/lib/libortools.sexp))
+    (action (with-stdout-to libortools.inc
+               (run ../gen_libortools_inc.exe %{deps})))
+  )
+)
+
+(subdir libortools-build
+  (rule
+    (deps (source_tree ../libortools))
+    (targets (dir build))
+    (action (progn
+      (run cmake
+             -DCMAKE_CXX_STANDARD=17
+             -DBUILD_absl=ON
+             -DBUILD_Protobuf=ON
+             -DBUILD_re2=ON
+             -DBUILD_SAMPLES=OFF
+             -DBUILD_EXAMPLES=OFF
+             -DBUILD_FLATZINC=OFF
+             -DBUILD_TESTING=OFF
+             -DBUILD_MATH_OPT=ON
+             -DUSE_COINOR=OFF
+             -DUSE_CPLEX=OFF
+             -DUSE_GLPK=OFF
+             -DUSE_HIGHS=OFF
+             -DUSE_PDLP=OFF
+             -DUSE_SCIP=OFF
+             -DUSE_XPRESS=OFF
+             -DUSE_GLOP=ON
+             -DUSE_GUROBI=ON
+             -S ../libortools
+             -B ./build)
+      (run cmake --build ./build --config Release -j)
+    ))
+  )
+)
+

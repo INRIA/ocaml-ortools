@@ -14,7 +14,7 @@ bug-reports: "https://github.com/inria/ocaml-ortools/issues"
 depends: [
   "dune" {>= "3.20"}
   "ortools" {>= "9.14"}
-  "dune-configurator" {build}
+  "sexplib0" {build}
   "ocaml" {>= "4.14.2"}
   "odoc" {with-doc}
 ]

@@ -1,3 +1,7 @@
+(data_only_dirs libortools)
+
+(dynamic_include ../libortools-build/libortools.inc)
+
 (library
   (name ortools_solvers)
   (public_name ortools_solvers)
@@ -6,6 +10,6 @@
   (foreign_stubs
     (language c)
     (names ocaml_ortools_solvers))
-  (c_library_flags (:include discover/flags.sexp))
   (libraries ortools)
 )
+
