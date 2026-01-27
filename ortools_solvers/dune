@@ -11,5 +11,8 @@
     (language c)
     (names ocaml_ortools_solvers))
   (libraries ortools)
+  (library_flags -ccopt "-L$CAMLORIGIN"
+                 -ccopt "-Wl,-rpath,$CAMLORIGIN")
+  (c_library_flags -lortools -Lortools_solvers)
 )
 
