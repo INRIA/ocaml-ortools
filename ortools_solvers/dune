@@ -12,7 +12,10 @@
     (names ocaml_ortools_solvers))
   (libraries ortools)
   (library_flags -ccopt "-L$CAMLORIGIN"
-                 -ccopt "-Wl,-rpath,$CAMLORIGIN")
+                 -ccopt "-Wl,-rpath,$CAMLORIGIN"
+                 ; nasty hack to ensure that libortools.so is copied to this
+                 ; directory by the rule in libortools.inc.
+                 -ccopt -DDUNE_DEP=%{dep:libortools.so})
   (c_library_flags -lortools -Lortools_solvers)
 )
 
