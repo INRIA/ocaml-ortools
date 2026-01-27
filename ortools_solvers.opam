@@ -13,7 +13,7 @@ homepage: "https://github.com/inria/ocaml-ortools"
 bug-reports: "https://github.com/inria/ocaml-ortools/issues"
 depends: [
   "dune" {>= "3.20"}
-  "ortools" {>= "9.14"}
+  "ortools" {>= "9.15"}
   "sexplib0" {build}
   "ocaml" {>= "4.14.2"}
   "odoc" {with-doc}
@@ -36,7 +36,7 @@ dev-repo: "git+https://github.com/inria/ocaml-ortools.git"
 x-maintenance-intent: ["(latest)"]
 url {
   src:
-    "https://github.com/INRIA/ocaml-ortools/releases/download/9.14.0/ortools-9.14.0.tbz"
+    "https://github.com/INRIA/ocaml-ortools/releases/download/9.15.0/ortools-9.15.0.tbz"
   checksum: [
     "sha256=3967abe3ecfdaa6c2c098be954825f792d0b925b5342a4ddb1ce5cf2d9f81e50"
     "sha512=5d6feb4b5d664812aad0e103f9a9991405739b4d3532a86059e069f7d4a5f5804d444e15937217af1e7838024305802176ccd8be0268467dfa0f68cfe60e7fe7"
