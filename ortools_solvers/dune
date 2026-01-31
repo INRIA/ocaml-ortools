@@ -1,5 +1,3 @@
-(data_only_dirs libortools)
-
 (dynamic_include ../libortools-build/libortools.inc)
 
 (library
@@ -9,13 +7,18 @@
   (modules ortools_solvers)
   (foreign_stubs
     (language c)
-    (names ocaml_ortools_solvers))
+    (names ocaml_ortools_solvers)
+    (flags :standard
+           -I../libjerry
+           ; hack to ensure that libjerry.so is copied to this
+           ; directory by the rule in libortools.inc <sigh>
+           -DDUNE_DEP=%{dep:libortools.so}))
   (libraries ortools)
-  (library_flags -ccopt "-L$CAMLORIGIN"
-                 -ccopt "-Wl,-rpath,$CAMLORIGIN"
-                 ; nasty hack to ensure that libortools.so is copied to this
-                 ; directory by the rule in libortools.inc.
-                 -ccopt -DDUNE_DEP=%{dep:libortools.so})
-  (c_library_flags -lortools -Lortools_solvers)
+  (library_flags :standard
+                 -ccopt "-L$CAMLORIGIN"
+                 -ccopt "-Wl,-rpath,$CAMLORIGIN")
+  (c_library_flags :standard
+                   -lortools -Lortools_solvers
+                   -Wl,-rpath,../lib)
 )
 

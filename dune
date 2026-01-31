@@ -1,3 +1,4 @@
+(data_only_dirs libortools)
 
 (executable
   (name gen_libortools_inc)
