@@ -22,3 +22,8 @@
                    -Wl,-rpath,../lib)
 )
 
+(install
+   (files (include ../libortools-build/libortools_files.sexp))
+   (section lib)
+   (package ortools_solvers)
+)

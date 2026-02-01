@@ -1,20 +1,53 @@
 (data_only_dirs libortools)
 
 (executable
-  (name gen_libortools_inc)
-  (modules gen_libortools_inc)
+  (name gen_libortools)
+  (modules gen_libortools)
   (libraries sexplib0 csexp))
 
+; use depext: abseil re2 protobuf protobuf-c
 (subdir libortools-build
   (rule
-    (deps (file build/lib/libortools.sexp))
-    (action (with-stdout-to libortools.inc
-               (run ../gen_libortools_inc.exe %{deps})))
+    (enabled_if (= %{ocaml-config:system} macosx))
+    (deps (source_tree ../libortools))
+    (targets (dir build))
+    (action (progn
+      (run cmake
+             -DCMAKE_CXX_STANDARD=17
+             -DBUILD_absl=OFF
+             -DBUILD_Protobuf=OFF
+             -DBUILD_re2=OFF
+             -DBUILD_SAMPLES=OFF
+             -DBUILD_EXAMPLES=OFF
+             -DBUILD_FLATZINC=OFF
+             -DBUILD_TESTING=OFF
+             -DBUILD_MATH_OPT=ON
+             -DUSE_COINOR=OFF
+             -DUSE_CPLEX=OFF
+             -DUSE_GLPK=OFF
+             -DUSE_HIGHS=OFF
+             -DUSE_PDLP=OFF
+             -DUSE_SCIP=OFF
+             -DUSE_XPRESS=OFF
+             -DUSE_GLOP=ON
+             -DUSE_GUROBI=ON
+             -S ../libortools
+             -B ./build)
+      (with-stdout-to libortools.inc
+         (pipe-stdout
+            (echo "libortools.9.15.so\nlibortools.9.so\nlibortools.so\n")
+            (run ../gen_libortools.exe -copy)))
+      (with-stdout-to libortools_files.sexp
+         (echo "(libortools.9.15.so libortools.9.so libortools.so)"))
+      (run cmake --build ./build --config Release -j)
+    ))
   )
 )
 
+; build and install: abseil re2 protobuf protobuf-c
 (subdir libortools-build
   (rule
+    (enabled_if (<> %{ocaml-config:system} macosx))
     (deps (source_tree ../libortools))
     (targets (dir build))
     (action (progn
@@ -39,8 +72,11 @@
              -DUSE_GUROBI=ON
              -S ../libortools
              -B ./build)
+      (with-stdout-to libortools.inc
+         (run ../gen_libortools.exe -copy build/lib/libortools.sexp))
+      (with-stdout-to libortools_files.sexp
+         (run ../gen_libortools.exe build/lib/libortools.sexp))
       (run cmake --build ./build --config Release -j)
     ))
   )
 )
-
