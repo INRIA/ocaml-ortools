@@ -9,8 +9,8 @@
     (language c)
     (names ocaml_ortools_solvers)
     (flags :standard
-           -I../libjerry
-           ; hack to ensure that libjerry.so is copied to this
+           -I../libortools
+           ; hack to ensure that libortools.so is copied to this
            ; directory by the rule in libortools.inc <sigh>
            -DDUNE_DEP=%{dep:libortools.so}))
   (libraries ortools)
