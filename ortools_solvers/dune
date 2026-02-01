@@ -24,6 +24,6 @@
 
 (install
    (files (include ../libortools-build/libortools_files.sexp))
-   (section lib)
+   (section libexec)
    (package ortools_solvers)
 )

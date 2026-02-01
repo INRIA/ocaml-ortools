@@ -107,5 +107,6 @@ post-messages: [
 Ensure the required dependencies are properly installed.
 See https://github.com/inria/ocaml-ortools.
 """
+  {failure}
 ]
 
