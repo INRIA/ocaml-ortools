@@ -19,7 +19,8 @@
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
                    -lortools -Lortools_solvers
-                   -Wl,-rpath,../lib)
+                   "-Wl,-rpath,'$ORIGIN/../ortools_solvers/'"
+                   -Wl,-rpath,@loader_path/../ortools_solvers/)
 )
 
 (install
