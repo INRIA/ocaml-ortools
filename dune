@@ -5,7 +5,10 @@
   (modules gen_libortools)
   (libraries sexplib0 csexp))
 
-; use depext: abseil re2 protobuf protobuf-c
+; CMAKE_BUILD_PARALLEL_LEVEL=$(expr $(nproc) - 1)
+; CMAKE_BUILD_PARALLEL_LEVEL=$(expr $(sysctl -n hw.logicalcpu) - 1)
+
+; macosx + use depext: abseil re2 protobuf protobuf-c
 (subdir libortools-build
   (rule
     (enabled_if (= %{ocaml-config:system} macosx))
@@ -44,7 +47,7 @@
   )
 )
 
-; build and install: abseil re2 protobuf protobuf-c
+; linux + build and install: abseil re2 protobuf protobuf-c
 (subdir libortools-build
   (rule
     (enabled_if (<> %{ocaml-config:system} macosx))
@@ -52,7 +55,7 @@
     (targets (dir build))
     (action (progn
       (run cmake
-             -DCMAKE_CXX_STANDARD=17
+             -DCMAKE_CXX_STANDARD=20
              -DBUILD_absl=ON
              -DBUILD_Protobuf=ON
              -DBUILD_re2=ON

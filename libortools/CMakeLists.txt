@@ -18,7 +18,16 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Enable output of compile commands during generation.
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile command" ON)
 
+if(APPLE)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 20)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_compile_options(-Wno-deprecated)
+add_compile_options(-Wno-deprecated-declarations)
 add_compile_options(-Wno-c++20-extensions)
 add_compile_options(-Wno-return-stack-address)
 add_compile_options(-Wno-switch)
@@ -43,14 +52,6 @@ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION} release: ${RELEASE}"
 if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dylib")
     set(CMAKE_SHARED_LIBRARY_SUFFIX  ".so")
 endif()
-
-if(MSVC)
-  set(CMAKE_CXX_STANDARD 20)
-else()
-  set(CMAKE_CXX_STANDARD 17)
-endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set max os target version.
 # set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
