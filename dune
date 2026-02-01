@@ -42,7 +42,7 @@
             (run ../gen_libortools.exe -copy)))
       (with-stdout-to libortools_files.sexp
          (echo "(libortools.9.15.so libortools.9.so libortools.so)"))
-      (run cmake --build ./build --config Release)
+      (run cmake --build ./build --config Release -j)
     ))
   )
 )
@@ -79,7 +79,7 @@
          (run ../gen_libortools.exe -copy build/lib/libortools.sexp))
       (with-stdout-to libortools_files.sexp
          (run ../gen_libortools.exe build/lib/libortools.sexp))
-      (run cmake --build ./build --config Release)
+      (run cmake --build ./build --config Release -j)
     ))
   )
 )
