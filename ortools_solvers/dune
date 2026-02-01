@@ -6,9 +6,10 @@
   (synopsis "Call Google OR-Tools solvers")
   (modules ortools_solvers)
   (foreign_stubs
-    (language c)
+    (language cxx)
     (names ocaml_ortools_solvers)
     (flags :standard
+           -std=c++17
            -I../libortools
            -I../libortools-build/build
            ; hack to ensure that libortools.so is copied to this
