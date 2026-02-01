@@ -18,12 +18,7 @@
 #include <caml/memory.h>
 #include <caml/fail.h>
 
-// see ortools/sat/c_api/cp_solver_c.h
-
-extern void SolveCpModelWithParameters(
-	const void* creq, int creq_len,
-	const void* cparams, int cparams_len,
-	void** cres, int* cres_len);
+#include "ortools/sat/c_api/cp_solver_c.h"
 
 CAMLprim value ocaml_ortools_sat_solve(value vmodel, value vparams)
 {
