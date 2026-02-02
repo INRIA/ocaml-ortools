@@ -1,3 +1,5 @@
+(dynamic_include ../libortools-build/libortools.inc)
+
 (library
   (name ortools_solvers)
   (public_name ortools_solvers)
@@ -5,7 +7,25 @@
   (modules ortools_solvers)
   (foreign_stubs
     (language c)
-    (names ocaml_ortools_solvers))
-  (c_library_flags (:include discover/flags.sexp))
+    (names ocaml_ortools_solvers)
+    (flags :standard
+           -I../libortools
+           -I../libortools-build/build
+           ; hack to ensure that libortools.so is copied to this
+           ; directory by the rule in libortools.inc <sigh>
+           -DDUNE_DEP=%{dep:libortools.so}))
   (libraries ortools)
+  (library_flags :standard
+                 -ccopt "-L$CAMLORIGIN"
+                 -ccopt "-Wl,-rpath,$CAMLORIGIN")
+  (c_library_flags :standard
+                   -lortools -Lortools_solvers
+                   "-Wl,-rpath,'$ORIGIN/../ortools_solvers/'"
+                   -Wl,-rpath,@loader_path/../ortools_solvers/)
+)
+
+(install
+   (files (include ../libortools-build/libortools_files.sexp))
+   (section libexec)
+   (package ortools_solvers)
 )

@@ -1,7 +1,8 @@
 
-## 9.15.0 (2026-01-21)
+## 9.15.0 (2026-01-27)
 
-Minor tweaks for upstream release (2026-01-09).
+Include the v9.15 Google OR-tools source and build together with the OCaml 
+interface.
 
 ## 9.14.0 (2025-12-31)
 

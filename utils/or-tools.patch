@@ -1,0 +1,131 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 69bf10b..648cf7a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -18,6 +18,18 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ # Enable output of compile commands during generation.
+ option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile command" ON)
+ 
++add_compile_options(-Wno-deprecated)
++add_compile_options(-Wno-c++20-extensions)
++add_compile_options(-Wno-return-stack-address)
++add_compile_options(-Wno-switch)
++add_compile_options(-Wno-nullability-completeness)
++
++# ocaml-ortools: collect all targets into a list
++macro(add_library _target)
++    _add_library(${_target} ${ARGN})
++    set_property(GLOBAL APPEND PROPERTY GlobalTargetList ${_target})
++endmacro()
++
+ include(utils)
+ set_version(VERSION RELEASE)
+ 
+@@ -28,6 +40,10 @@ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION} release: ${RELEASE}"
+ #message(STATUS "minor: ${PROJECT_VERSION_MINOR}")
+ #message(STATUS "patch: ${PROJECT_VERSION_PATCH}")
+ 
++if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dylib")
++    set(CMAKE_SHARED_LIBRARY_SUFFIX  ".so")
++endif()
++
+ if(MSVC)
+   set(CMAKE_CXX_STANDARD 20)
+ else()
+@@ -470,3 +486,39 @@ endforeach()
+ foreach(EXAMPLES IN ITEMS contrib cpp dotnet java python)
+   add_subdirectory(examples/${EXAMPLES})
+ endforeach()
++
++# ocaml-ortools: generate <build>/lib/libraries.sexp
++
++message(STATUS "Generating library list")
++
++# Gather all shared library targets
++get_property(allTargets GLOBAL PROPERTY GlobalTargetList)
++
++set(shared_libs "")
++set(static_libs "")
++foreach(t ${allTargets})
++    if(t MATCHES "::|(^utf8_(range|validity)$)")
++	get_target_property(type ${t} TYPE)
++	if(type STREQUAL "SHARED_LIBRARY")
++	    list(APPEND shared_libs ${t})
++	endif()
++	if(type STREQUAL "STATIC_LIBRARY")
++	    list(APPEND static_libs ${t})
++	endif()
++    endif()
++endforeach()
++
++set(lib_files "")
++foreach(t ${shared_libs})
++    list(APPEND lib_files "$<TARGET_FILE_NAME:${t}>")
++    if(NOT t MATCHES "^((absl|protobuf)::)|(utf8_(range|validity)$)")
++	list(APPEND lib_files "$<TARGET_SONAME_FILE_NAME:${t}>")
++    endif()
++    list(APPEND lib_files "$<TARGET_LINKER_FILE_NAME:${t}>")
++endforeach()
++foreach(t ${static_libs})
++    list(APPEND lib_files "$<TARGET_FILE_NAME:${t}>")
++endforeach()
++
++string(REPLACE ";" "\n" lib_files_nl "${lib_files}")
++file(GENERATE OUTPUT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libortools.sexp" CONTENT "${lib_files_nl}")
+diff --git a/cmake/dependencies/CMakeLists.txt b/cmake/dependencies/CMakeLists.txt
+index 6621130..b6dc349 100644
+--- a/cmake/dependencies/CMakeLists.txt
++++ b/cmake/dependencies/CMakeLists.txt
+@@ -112,17 +112,11 @@ if(BUILD_absl)
+   list(APPEND CMAKE_MESSAGE_INDENT "  ")
+   FetchContent_Declare(
+     absl
+-    GIT_REPOSITORY "https://github.com/abseil/abseil-cpp.git"
+-    GIT_TAG "20250814.1"
+-    GIT_SHALLOW TRUE
+-    UPDATE_COMMAND git reset --hard
+-    PATCH_COMMAND git apply --ignore-whitespace
+-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/abseil-cpp-20250814.1.patch"
+-    OVERRIDE_FIND_PACKAGE
+-    SYSTEM
++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/abseil-cpp"
+   )
+-  set(ABSL_USE_SYSTEM_INCLUDES ON)
++  set(ABSL_USE_SYSTEM_INCLUDES OFF)
+   # We want Abseil to declare what C++ standard it was compiled with.
++  set(ABSL_BUILD_SHARED_LIBS ON)
+   set(ABSL_PROPAGATE_CXX_STD ON)
+   if(OR_TOOLS_BUILD_TESTING)
+     set(ABSL_BUILD_TEST_HELPERS ON)
+@@ -148,15 +142,7 @@ if(BUILD_Protobuf)
+   list(APPEND CMAKE_MESSAGE_INDENT "  ")
+   FetchContent_Declare(
+     Protobuf
+-    GIT_REPOSITORY "https://github.com/protocolbuffers/protobuf.git"
+-    GIT_TAG "v33.1"
+-    GIT_SHALLOW TRUE
+-    GIT_SUBMODULES ""
+-    UPDATE_COMMAND git reset --hard
+-    PATCH_COMMAND git apply --ignore-whitespace
+-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/protobuf-v33.1.patch"
+-    OVERRIDE_FIND_PACKAGE # Make package visible for "protobuf-matchers" below
+-    SYSTEM
++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/protobuf"
+   )
+   set(protobuf_BUILD_TESTS OFF)
+   set(protobuf_BUILD_SHARED_LIBS ON)
+@@ -176,13 +162,7 @@ if(BUILD_re2)
+   list(APPEND CMAKE_MESSAGE_INDENT "  ")
+   FetchContent_Declare(
+     re2
+-    GIT_REPOSITORY "https://github.com/google/re2.git"
+-    GIT_TAG "2025-08-12"
+-    GIT_SHALLOW TRUE
+-    UPDATE_COMMAND git reset --hard
+-    PATCH_COMMAND git apply --ignore-whitespace
+-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/re2-2025-08-12.patch"
+-    SYSTEM
++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/re2"
+   )
+   set(RE2_BUILD_TESTING OFF)
+   FetchContent_MakeAvailable(re2)
