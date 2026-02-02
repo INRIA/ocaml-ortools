@@ -177,7 +177,7 @@ Build with the following commands:
 ```
 cmake -DCMAKE_CXX_STANDARD=20 \
       -DBUILD_absl=ON -DBUILD_Protobuf=ON -DBUILD_re2=ON \
-      -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \ 
+      -DBUILD_SAMPLES=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FLATZINC=OFF \
       -DBUILD_TESTING=OFF -DBUILD_MATH_OPT=ON \
       -DUSE_COINOR=OFF -DUSE_CPLEX=OFF -DUSE_GLPK=OFF -DUSE_HIGHS=OFF \
       -DUSE_PDLP=OFF -DUSE_SCIP=OFF -DUSE_XPRESS=OFF \
@@ -185,7 +185,7 @@ cmake -DCMAKE_CXX_STANDARD=20 \
       -S . -B build
 cmake --build build --config Release -j 16 -v
 ```
-The options `USE_GLOP` and `USE_GUROBI` must be set to avoid linking errors. 
+The options `USE_GLOP` and `USE_GUROBI` must be set to avoid linking errors.
 Compiling with `USE_GUROBI` requires that `USE_MATHOPT` be set.
 (I needed `-j 16` to stop my build machine from freezing on errors.)
 
