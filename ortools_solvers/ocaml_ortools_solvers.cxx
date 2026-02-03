@@ -11,14 +11,14 @@
    limitations under the License. */
 
 /* Based on OR-Tools, Copyright 2010-2025 Google LLC
-   OCaml Interface: 2025 T. Bourke */
+   OCaml Interface: 2026 T. Bourke */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
 
-// see ortools/sat/c_api/cp_solver_c.h/.cc
+// see ortools/sat/c_api/cp_solver_c.{h, cc}
 
 #include "absl/log/check.h"
 #include "ortools/base/memutil.h"
@@ -35,13 +35,13 @@ CAMLprim value ocaml_ortools_sat_solve(value vmodel, value vparams)
     CAMLparam2(vparams, vmodel);
     CAMLlocal1(vresponse);
 
-    operations_research::sat::CpSatEnv env;
-    void* const cenv = env;
-
     const void* creq = String_val(vmodel);
     int creq_len = caml_string_length(vmodel);
+
     const void* cparams = String_val(vparams);
     int cparams_len = caml_string_length(vparams);
+
+    operations_research::sat::Model model;
 
     int cres_len = 0;
 
@@ -51,12 +51,8 @@ CAMLprim value ocaml_ortools_sat_solve(value vmodel, value vparams)
     operations_research::sat::SatParameters params;
     CHECK(params.ParseFromArray(cparams, cparams_len));
 
-    operations_research::sat::CpSatEnv* env =
-        static_cast<operations_research::sat::CpSatEnv*>(cenv);
-
-    env->model.Add(NewSatParameters(params));
-    operations_research::sat::CpSolverResponse res =
-      SolveCpModel(req, &env->model);
+    model.Add(NewSatParameters(params));
+    operations_research::sat::CpSolverResponse res = SolveCpModel(req, &model);
 
     std::string res_str;
     CHECK(res.SerializeToString(&res_str));
