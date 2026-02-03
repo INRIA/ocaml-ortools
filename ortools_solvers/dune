@@ -22,6 +22,10 @@
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
                    -lortools -Lortools_solvers
+                   -labsl_log_internal_message
+                   -labsl_raw_logging_internal
+                   -labsl_raw_hash_set
+                   -lprotobuf
                    "-Wl,-rpath,'$ORIGIN/../ortools_solvers/'"
                    -Wl,-rpath,@loader_path/../ortools_solvers/)
 )
