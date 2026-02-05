@@ -18,9 +18,11 @@ module Sat : sig
   (** Interface to {{:https://developers.google.com/optimization/cp}CP-SAT}. *)
 
   (** Try to solve the given model. *)
-  val solve : ?parameters:Ortools.Sat.Parameters.t
-              -> Ortools.Sat.model
-              -> Ortools.Sat.Response.t
+  val solve :
+       ?observer:(Ortools.Sat.Response.t -> unit)
+    -> ?parameters:Ortools.Sat.Parameters.t
+    -> Ortools.Sat.model
+    -> Ortools.Sat.Response.t
 
 end
 

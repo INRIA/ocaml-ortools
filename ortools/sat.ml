@@ -847,9 +847,14 @@ module Response = struct (* {{{ *)
 
 end (* }}} *)
 
-type raw_solver = parameters_pb:string -> model_pb:string -> string
+type raw_solver =
+     ?observer_pb:(string -> unit)
+  -> parameters_pb:string
+  -> model_pb:string
+  -> unit
+  -> string
 
-let solve (raw_solver : raw_solver) ?parameters model =
+let solve (raw_solver : raw_solver) ?observer ?parameters model =
   (* encode model *)
   let enc = Pbrt.Encoder.create () in
   pb_encode model enc;
@@ -864,9 +869,18 @@ let solve (raw_solver : raw_solver) ?parameters model =
   Parameters.pb_encode parameters enc;
   let parameters_pb = Pbrt.Encoder.to_string enc in
   Pbrt.Encoder.reset enc;
-
+  (* wrap observer *)
+  let observer_pb =
+    match observer with
+    | None -> None
+    | Some f ->
+        Some (fun response_pb ->
+          let dec = Pbrt.Decoder.of_string response_pb in
+          let response = Cp_model.decode_pb_cp_solver_response dec in
+          f (Response.of_proto model response))
+  in
   (* solve and decode response *)
-  let response_pb = raw_solver ~parameters_pb ~model_pb in
+  let response_pb = raw_solver ?observer_pb ~parameters_pb ~model_pb () in
   let dec = Pbrt.Decoder.of_string response_pb in
   let response = Cp_model.decode_pb_cp_solver_response dec in
   Response.of_proto model response

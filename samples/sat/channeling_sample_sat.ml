@@ -61,13 +61,13 @@ let channeling_sample_sat () =
   in
 
   (* Search and print out all solutions. *)
-  let CP.Response.{ additional_solutions; _ } = CPSAT.solve ~parameters model in
-  (* TODO: Support the FeasibleSolutionObserver from OCaml? *)
-  let print_solution sol =
-    printf "x=%d y=%d b=%d\n"
+  let observer CP.Response.{ solution = sol; _ } =
+    printf "x=%d y=%d b=%d@;%!"
       sol.(CP.Var.to_index x) sol.(CP.Var.to_index y) sol.(CP.Var.to_index b)
   in
-  List.iter print_solution additional_solutions
+  Format.open_vbox 0;
+  ignore (CPSAT.solve ~observer ~parameters model);
+  Format.close_box ()
 
 let _ = channeling_sample_sat ()
 

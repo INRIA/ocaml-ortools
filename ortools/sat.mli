@@ -632,12 +632,20 @@ end (* }}} *)
 (** An interface for invoking CP-SAT. This function is passed protocol buffers
     for the parameters and the model and should return a protocol buffer for
     the response. *)
-type raw_solver = parameters_pb:string -> model_pb:string -> string
+type raw_solver =
+     ?observer_pb:(string -> unit)
+  -> parameters_pb:string
+  -> model_pb:string
+  -> unit
+  -> string
 
 (** Calls a {!type:raw_solver} with encoded versions of the parameters and
-    model and returns the decoded response. *)
+    model and returns the decoded response. If a (feasible solution) observer
+    is given, it will be invoked for each feasible solution. Set
+    {!Parameters.enumerate_all_solutions}, to observe them all. *)
 val solve :
      raw_solver
+  -> ?observer:(Response.t -> unit)
   -> ?parameters:Parameters.t
   -> model
   -> Response.t

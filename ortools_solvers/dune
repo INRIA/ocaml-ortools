@@ -16,7 +16,7 @@
            ; hack to ensure that libortools.so is copied to this
            ; directory by the rule in libortools.inc <sigh>
            -DDUNE_DEP=%{dep:libortools.so}))
-  (libraries ortools)
+  (libraries ortools threads)
   (library_flags :standard
                  -ccopt "-L$CAMLORIGIN"
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")

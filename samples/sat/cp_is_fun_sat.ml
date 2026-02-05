@@ -62,39 +62,37 @@ let main () =
 
   (* Creates a solver and solves the model. *)
   (* Enumerate all solutions. *)
-  let parameters = Sat_parameters.(make_sat_parameters
-                     (* Enumerate all solutions. *)
-                     ~enumerate_all_solutions:true
-                     ~fill_additional_solutions_in_response:true
-                     ())
+  let parameters = Sat_parameters.(make_sat_parameters ())
   in
-  (* TODO: Support the FeasibleSolutionObserver from OCaml? *)
+  Sat_parameters.sat_parameters_set_enumerate_all_solutions parameters true;
+  let num_solutions = ref 0 in
+  let observer CP.Response.{ solution; _ } =
+    incr num_solutions;
+    let sep = ref "" in
+    List.iter (fun v ->
+        printf "%s%a=%d" !sep CP.Var.pp v solution.(CP.Var.to_index v); sep := " ")
+      letters;
+    printf "@;"
+  in
 
   (* Solve. *)
+  Format.open_vbox 0;
   let CP.Response.{ status;
-                    additional_solutions;
                     num_conflicts;
                     num_branches;
                     wall_time;
                     _ } =
-    CPSAT.solve ~parameters model
+    CPSAT.solve ~observer ~parameters model
   in
-  let print_solution sol =
-    let sep = ref "" in
-    List.iter (fun v ->
-        printf "%s%a=%d" !sep CP.Var.pp v sol.(CP.Var.to_index v); sep := " ")
-      letters;
-    printf "\n"
-  in
-  List.iter print_solution additional_solutions;
 
   (* Statistics. *)
-  printf "\nStatistics\n";
-  printf "  status   : %s\n" (CP.Response.string_of_status status);
-  printf "  conflicts: %d\n" num_conflicts;
-  printf "  branches : %d\n" num_branches;
-  printf "  wall time: %e s\n" wall_time;
-  printf "  sol found: %d\n" (List.length additional_solutions)
+  printf "@;Statistics@;";
+  printf "  status   : %s@;" (CP.Response.string_of_status status);
+  printf "  conflicts: %d@;" num_conflicts;
+  printf "  branches : %d@;" num_branches;
+  printf "  wall time: %e s@;" wall_time;
+  printf "  sol found: %d@;" !num_solutions;
+  Format.close_box ()
 
 let _ = main ()
 
