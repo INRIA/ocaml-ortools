@@ -68,7 +68,7 @@ depexts: [
   ["bzip2"]	    {os-distribution = "archlinux"}
   ["bzip2-libs"]    {os-distribution = "centos-9"}
   ["bzip2-libs"]    {os-distribution = "centos-10"}
-  ["libzip2"]	    {os-distribution = "fedora"}
+  ["bzip2-devel"]   {os-distribution = "fedora"}
   ["bzip2"]	    {os-distribution = "freebsd"}
   ["bzip2"]	    {os-distribution = "openbsd"}
   ["libbz2-dev"]    {os-distribution = "opensuse"}
@@ -88,7 +88,7 @@ depexts: [
   ["libeigen3-dev"] {os-distribution = "ubuntu"}
 
   # needed to compile abseil (linux/futex.h)
-  ["linux-header"]  {os-distribution = "alpine"}
+  ["linux-headers"] {os-distribution = "alpine"}
 
 ## brittle
 ## debian, alpine, archlinux: build with OCaml ortools_solvers package
