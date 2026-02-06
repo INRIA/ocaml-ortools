@@ -12,7 +12,9 @@
            -std=c++20
            -I../libortools
            -I../libortools-build/build
-           -DOR_PROTO_DLL=""
+           -I../libortools/protobuf/src
+           -I../libortools/protobuf/third_party/utf8_range
+           -DOR_PROTO_DLL=
            ; hack to ensure that libortools.so is copied to this
            ; directory by the rule in libortools.inc <sigh>
            -DDUNE_DEP=%{dep:libortools.so}))
