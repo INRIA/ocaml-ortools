@@ -57,14 +57,14 @@ depexts: [
   ["libzstd"]	    {os-distribution = "centos-9"}
   ["libzstd"]	    {os-distribution = "centos-10"}
   ["libzip"]	    {os-distribution = "freebsd"}
-  ["zlib-ng"]       {os-distribution = "opensuse"}
+  ["zlib-devel"]    {os-distribution = "opensuse"}
   ["zlib1g-dev"]    {os-distribution = "ubuntu"}
   
 
   # 1.0.8
   ["bzip2"]	    {os = "macos" & os-distribution = "homebrew"}
   ["libbz2-dev"]    {os-distribution = "debian"}
-  ["bzip2"]	    {os-distribution = "alpine"}
+  ["bzip2-dev"]	    {os-distribution = "alpine"}
   ["bzip2"]	    {os-distribution = "archlinux"}
   ["bzip2-libs"]    {os-distribution = "centos-9"}
   ["bzip2-libs"]    {os-distribution = "centos-10"}
