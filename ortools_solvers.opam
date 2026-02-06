@@ -57,20 +57,21 @@ depexts: [
   ["libzstd"]	    {os-distribution = "centos-9"}
   ["libzstd"]	    {os-distribution = "centos-10"}
   ["libzip"]	    {os-distribution = "freebsd"}
-  ["libzip-dev"]    {os-distribution = "opensuse"}
-  ["zlib"]	    {os-distribution = "ubuntu"}
+  ["zlib-ng"]       {os-distribution = "opensuse"}
+  ["zlib1g-dev"]    {os-distribution = "ubuntu"}
+  
 
   # 1.0.8
   ["bzip2"]	    {os = "macos" & os-distribution = "homebrew"}
   ["libbz2-dev"]    {os-distribution = "debian"}
-  ["libbz2"]	    {os-distribution = "alpine"}
+  ["bzip2"]	    {os-distribution = "alpine"}
   ["bzip2"]	    {os-distribution = "archlinux"}
   ["bzip2-libs"]    {os-distribution = "centos-9"}
   ["bzip2-libs"]    {os-distribution = "centos-10"}
   ["libbzip2"]	    {os-distribution = "fedora"}
   ["libzip2"]	    {os-distribution = "freebsd"}
   ["libbz2-dev"]    {os-distribution = "opensuse"}
-  ["libzip2"]	    {os-distribution = "ubuntu"}
+  ["libbz2-dev"]    {os-distribution = "ubuntu"}
 
   # 3.4.1
   ["eigen@3"]	    {os = "macos" & os-distribution = "homebrew"}
@@ -82,7 +83,7 @@ depexts: [
   ["eigen3-devel"]  {os-distribution = "fedora"}
   ["eigen"]	    {os-distribution = "freebsd"}
   ["eigen3"]	    {os-distribution = "opensuse"}
-  ["eigen3"]	    {os-distribution = "ubuntu"}
+  ["libeigen3-dev"] {os-distribution = "ubuntu"}
 
 ## brittle
 ## debian, alpine, archlinux: build with OCaml ortools_solvers package
@@ -114,7 +115,7 @@ x-ci-accept-failures: [
 # "fedora-43"
 # "freebsd-14.3"
 # "macos-homebrew"
-# "opensuse-15.6"
+  "opensuse-15.6"	# cannot compile with cmake
 # "opensuse-16.0"
 # "opensuse-tumbleweed"
 # "ubuntu-22.04"
