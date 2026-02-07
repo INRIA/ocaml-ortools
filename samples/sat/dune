@@ -1,71 +1,49 @@
 
-(alias
- (name samples.exe)
- (deps assignment_sat.exe
-       assignment_task_sizes_sat.exe
-       assignment_teams_sat.exe
-       assumptions_sample_sat.exe
-       binpacking_problem_sat.exe
-       channeling_sample_sat.exe
-       cp_is_fun_sat.exe
-       cp_sat_example.exe))
-
-(alias
- (name samples.bc)
- (deps assignment_sat.bc
-       assignment_task_sizes_sat.bc
-       assignment_teams_sat.bc
-       assumptions_sample_sat.bc
-       binpacking_problem_sat.bc
-       channeling_sample_sat.bc
-       cp_is_fun_sat.bc
-       cp_sat_example.bc))
-
 (executable
  (name assignment_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name assignment_task_sizes_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name assignment_teams_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name assumptions_sample_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name binpacking_problem_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name channeling_sample_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name cp_is_fun_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
 (executable
  (name cp_sat_example)
  (libraries ortools ortools_solvers)
  (modes byte exe)
- (enabled_if false))
+)
 
