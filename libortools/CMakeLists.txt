@@ -562,4 +562,7 @@ foreach(t ${static_libs})
 endforeach()
 
 string(REPLACE ";" "\n" lib_files_nl "${lib_files}")
-file(GENERATE OUTPUT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libortools.sexp" CONTENT "${lib_files_nl}")
+message(STATUS "Library Output Directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+file(GENERATE OUTPUT "libortools.sexp" CONTENT "${lib_files_nl}")
+file(GENERATE OUTPUT "libdir.sexp" CONTENT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+

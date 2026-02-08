@@ -36,7 +36,7 @@
              -DUSE_GUROBI=ON
              -S ../libortools
              -B ./build)
-      (run cmake --build ./build --config Release -j 16)
+      (run cmake --build ./build --config Release -j 8)
       (with-stdout-to libortools.inc
          (pipe-stdout
             (echo "libortools.9.15.so\nlibortools.9.so\nlibortools.so\n")
@@ -75,11 +75,11 @@
              -DUSE_GUROBI=ON
              -S ../libortools
              -B ./build)
-      (run cmake --build ./build --config Release -j 16)
+      (run cmake --build ./build --config Release -j 8)
       (with-stdout-to libortools.inc
-         (run ../gen_libortools.exe -copy build/lib/libortools.sexp))
+         (run ../gen_libortools.exe -copy build/libortools.sexp))
       (with-stdout-to libortools_files.sexp
-         (run ../gen_libortools.exe build/lib/libortools.sexp))
+         (run ../gen_libortools.exe build/libortools.sexp))
     ))
   )
 )

@@ -1,7 +1,7 @@
 
 open Sexplib0
 
-let build_path = "../libortools-build/build/lib/"
+let build_path = "../libortools-build/build/"
 
 let from_channel acc0 cin =
   let rec loop acc =
@@ -17,12 +17,17 @@ let add_contents acc0 path =
   let finally () = close_in cin in
   Fun.protect ~finally (fun () -> from_channel acc0 cin)
 
-let copy file =
+let find_lib_path build_path libfile =
+  if Sys.file_exists (build_path ^ "lib64/" ^ libfile)
+  then build_path ^ "lib64/"
+  else build_path ^ "lib/"
+
+let copy lib_path file =
   Sexp.(List [
     Atom "rule";
     List [
       Atom "action";
-      List [Atom "copy"; Atom (build_path ^ file); Atom file]]])
+      List [Atom "copy"; Atom (lib_path ^ file); Atom file]]])
 
 let uniq xs =
   let rec f l ys =
@@ -56,8 +61,11 @@ let () =
   in
   if libs = [] then exit 0;
   if !do_copy
-  then Format.(printf "@[<v>%a@]"
-         (pp_print_list Sexp.(pp_hum_indent 2)) (List.map copy libs))
+  then
+    let lib_path = find_lib_path build_path (List.hd libs) in
+    Format.(printf "@[<v>%a@]"
+             (pp_print_list Sexp.(pp_hum_indent 2))
+               (List.map (copy lib_path) libs))
   else Format.(printf "@[<v>%a@]"
          Sexp.(pp_hum_indent 2)
          (Sexp.(List (List.map (fun x -> Atom x) libs))))
