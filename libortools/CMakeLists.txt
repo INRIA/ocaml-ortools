@@ -539,7 +539,7 @@ set(shared_libs "")
 set(static_libs "")
 foreach(t ${allTargets})
     # Fedora: need to skip the induced zlib target
-    if(t MATCHES "^ZLIB::(ZLIB|ZLIBSTATIC)$")
+    if(t MATCHES "^ZLIB::(ZLIB|ZLIBSTATIC|zlibstatic)$")
 	continue()
     endif()
     if(t MATCHES "::|(^utf8_(range|validity)$)")
