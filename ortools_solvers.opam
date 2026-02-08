@@ -56,9 +56,9 @@ depexts: [
   ["zlib"]		{os-distribution = "archinux"}
   ["libzstd"]		{os-distribution = "centos-9"}
   ["libzstd"]		{os-distribution = "centos-10"}
-  ["zlib-ng-devel"]	{os-distribution = "fedora"}
+  ["zlib-dev"]		{os-distribution = "fedora"}
   ["libzip"]		{os-distribution = "freebsd"}
-  ["zlib-devel"]	{os-distribution = "opensuse"}
+  ["zlib-dev"]		{os-distribution = "opensuse"}
   ["zlib1g-dev"]	{os-distribution = "ubuntu"}
   
 
