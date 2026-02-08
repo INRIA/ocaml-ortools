@@ -281,11 +281,11 @@ module Constraint : sig (* {{{ *)
   val bool_xor : Var.t_bool list -> t
 
   (** At most one literal is true. Sum literals <= 1.
-      Same as {!At_most_one}. *)
+      Same as {!AtMostOne}. *)
   val at_most_one : Var.t_bool list -> t
 
   (** Exactly one literal is true. Sum literals == 1.
-      Same as {!Exactly_one}. *)
+      Same as {!ExactlyOne}. *)
   val exactly_one : Var.t_bool list -> t
 
   (** At least one of the literals must be true.
@@ -305,11 +305,11 @@ module Constraint : sig (* {{{ *)
     val bool_xor : Var.t_bool array -> t
 
     (** At most one literal is true. Sum literals <= 1.
-        Same as {!At_most_one}. *)
+        Same as {!AtMostOne}. *)
     val at_most_one : Var.t_bool array -> t
 
     (** Exactly one literal is true. Sum literals == 1.
-        Same as {!Exactly_one}. *)
+        Same as {!ExactlyOne}. *)
     val exactly_one : Var.t_bool array -> t
 
     (** At least one of the literals must be true.
@@ -362,7 +362,7 @@ module Constraint : sig (* {{{ *)
   val abs_equality : 'a Var.t -> LinearExpr.t list -> t
 
   (** Require that a list of (scaled) variables and constants have
-      different values from each other. Same as {!All_diff}. *)
+      different values from each other. Same as {!AllDiff}. *)
   val all_different : LinearExpr.t list -> t
 
   (** {1:linear Linear Constraints} *)
@@ -642,7 +642,7 @@ type raw_solver =
 (** Calls a {!type:raw_solver} with encoded versions of the parameters and
     model and returns the decoded response. If a (feasible solution) observer
     is given, it will be invoked for each feasible solution. Set
-    {!Parameters.enumerate_all_solutions}, to observe them all. *)
+    {!Sat_parameters.enumerate_all_solutions}, to observe them all. *)
 val solve :
      raw_solver
   -> ?observer:(Response.t -> unit)
