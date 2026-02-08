@@ -50,43 +50,42 @@ depexts: [
 ## solid
 
   #zlib 1.3.1
-  ["zlib"]		{os = "macos" & os-distribution = "homebrew"}
-  ["libz-dev"]		{os-distribution = "debian"}
-  ["zlib-dev"]		{os-distribution = "alpine"}
-  ["zlib"]		{os-distribution = "archinux"}
-  ["libzstd"]		{os-distribution = "centos-9"}
-  ["libzstd"]		{os-distribution = "centos-10"}
-  ["zlib-dev"]		{os-distribution = "fedora"}
-  ["libzip"]		{os-distribution = "freebsd"}
-  ["zlib-dev"]		{os-distribution = "opensuse"}
-  ["zlib1g-dev"]	{os-distribution = "ubuntu"}
-  
+  ["zlib"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["libz-dev"]		    {os-distribution = "debian"}
+  ["zlib-dev"]		    {os-distribution = "alpine"}
+  ["zlib"]		    {os-distribution = "archinux"}
+  ["libzstd"]		    {os-distribution = "centos-9"}
+  ["libzstd"]		    {os-distribution = "centos-10"}
+  ["zlib-ng-compat-devel"]  {os-distribution = "fedora"}
+  ["libzip"]		    {os-distribution = "freebsd"}
+  ["zlib-dev"]		    {os-distribution = "opensuse"}
+  ["zlib1g-dev"]	    {os-distribution = "ubuntu"}
 
   # 1.0.8
-  ["bzip2"]		{os = "macos" & os-distribution = "homebrew"}
-  ["libbz2-dev"]	{os-distribution = "debian"}
-  ["bzip2-dev"]		{os-distribution = "alpine"}
-  ["bzip2"]		{os-distribution = "archlinux"}
-  ["bzip2-libs"]	{os-distribution = "centos-9"}
-  ["bzip2-libs"]	{os-distribution = "centos-10"}
-  ["bzip2-devel"]	{os-distribution = "fedora"}
-  ["bzip2"]		{os-distribution = "freebsd"}
-  ["bzip2"]		{os-distribution = "openbsd"}
-  ["libbz2-dev"]	{os-distribution = "opensuse"}
-  ["libbz2-dev"]	{os-distribution = "ubuntu"}
+  ["bzip2"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["libbz2-dev"]	    {os-distribution = "debian"}
+  ["bzip2-dev"]		    {os-distribution = "alpine"}
+  ["bzip2"]		    {os-distribution = "archlinux"}
+  ["bzip2-libs"]	    {os-distribution = "centos-9"}
+  ["bzip2-libs"]	    {os-distribution = "centos-10"}
+  ["bzip2-devel"]	    {os-distribution = "fedora"}
+  ["bzip2"]		    {os-distribution = "freebsd"}
+  ["bzip2"]		    {os-distribution = "openbsd"}
+  ["libbz2-dev"]	    {os-distribution = "opensuse"}
+  ["libbz2-dev"]	    {os-distribution = "ubuntu"}
 
   # 3.4.1
-  ["eigen@3"]		{os = "macos" & os-distribution = "homebrew"}
-  ["libeigen3-dev"]	{os-distribution = "debian"}
-  ["eigen-dev"]		{os-distribution = "alpine"}
-  ["eigen3"]		{os-distribution = "archlinux"}
-  ["eigen3"]		{os-distribution = "centos-9"}
-  ["eigen3"]		{os-distribution = "centos-10"}
-  ["eigen3-devel"]	{os-distribution = "fedora"}
-  ["eigen"]		{os-distribution = "freebsd"}
-  ["eigen3"]		{os-distribution = "openbsd"}
-  ["eigen3"]		{os-distribution = "opensuse"}
-  ["libeigen3-dev"]	{os-distribution = "ubuntu"}
+  ["eigen@3"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["libeigen3-dev"]	    {os-distribution = "debian"}
+  ["eigen-dev"]		    {os-distribution = "alpine"}
+  ["eigen3"]		    {os-distribution = "archlinux"}
+  ["eigen3"]		    {os-distribution = "centos-9"}
+  ["eigen3"]		    {os-distribution = "centos-10"}
+  ["eigen3-devel"]	    {os-distribution = "fedora"}
+  ["eigen"]		    {os-distribution = "freebsd"}
+  ["eigen3"]		    {os-distribution = "openbsd"}
+  ["eigen3"]		    {os-distribution = "opensuse"}
+  ["libeigen3-dev"]	    {os-distribution = "ubuntu"}
 
   # needed to compile abseil (linux/futex.h)
   ["linux-headers"]	{os-distribution = "alpine"}
