@@ -59,7 +59,7 @@ depexts: [
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
-  ["zlib-dev"]		    {os-distribution = "opensuse"}
+  ["libz1"]		    {os-distribution = "opensuse"}
   ["zlib1g-dev"]	    {os-distribution = "ubuntu"}
 
   # 1.0.8
@@ -114,7 +114,7 @@ x-ci-accept-failures: [
 # "fedora-43"
 # "freebsd-14.3"
   "opensuse-15.6"	# cannot compile with cmake
-# "opensuse-16.0"
+  "opensuse-16.0"	# incorrect paths in /usr/lib64/cmake/ZLIB/* files
   "ubuntu-22.04"	# cmake is too old
   "ubuntu-24.04"
   "cygwin"
