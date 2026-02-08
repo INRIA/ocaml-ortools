@@ -38,6 +38,41 @@ add_compile_options(-Wno-deprecated)
 add_compile_options(-Wno-deprecated-declarations)
 add_compile_options(-Wno-switch)
 
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+    execute_process(
+        COMMAND brew --prefix eigen@3
+	RESULT_VARIABLE BREW_EIGEN3
+	OUTPUT_VARIABLE BREW_EIGEN3_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (BREW_EIGEN3 EQUAL 0 AND EXISTS "${BREW_EIGEN3_PREFIX}")
+	message(STATUS "Found eigen@3 keg installed by Homebrew at ${BREW_EIGEN3_PREFIX}")
+	list(APPEND CMAKE_PREFIX_PATH ${BREW_EIGEN3_PREFIX})
+    endif()
+
+    execute_process(
+        COMMAND brew --prefix bzip2
+	RESULT_VARIABLE BREW_BZIP2
+	OUTPUT_VARIABLE BREW_BZIP2_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (BREW_BZIP2 EQUAL 0 AND EXISTS "${BREW_BZIP2_PREFIX}")
+	message(STATUS "Found bzip2 keg installed by Homebrew at ${BREW_BZIP2_PREFIX}")
+	list(APPEND CMAKE_PREFIX_PATH ${BREW_BZIP2_PREFIX})
+    endif()
+
+    execute_process(
+        COMMAND brew --prefix zlib
+	RESULT_VARIABLE BREW_ZLIB
+	OUTPUT_VARIABLE BREW_ZLIB_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (BREW_ZLIB EQUAL 0 AND EXISTS "${BREW_ZLIB_PREFIX}")
+	message(STATUS "Found zlib keg installed by Homebrew at ${BREW_ZLIB_PREFIX}")
+	list(APPEND CMAKE_PREFIX_PATH ${BREW_ZLIB_PREFIX})
+    endif()
+endif()
+
 # ocaml-ortools: collect all targets into a list
 macro(add_library _target)
     _add_library(${_target} ${ARGN})
