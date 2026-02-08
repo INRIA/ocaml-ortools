@@ -1,48 +1,56 @@
 
 (executable
  (name assignment_sat)
+ (modules assignment_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name assignment_task_sizes_sat)
+ (modules assignment_task_sizes_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name assignment_teams_sat)
+ (modules assignment_teams_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name assumptions_sample_sat)
+ (modules assumptions_sample_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name binpacking_problem_sat)
+ (modules binpacking_problem_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name channeling_sample_sat)
+ (modules channeling_sample_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name cp_is_fun_sat)
+ (modules cp_is_fun_sat)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )
 
 (executable
  (name cp_sat_example)
+ (modules cp_sat_example)
  (libraries ortools ortools_solvers)
  (modes byte exe)
 )

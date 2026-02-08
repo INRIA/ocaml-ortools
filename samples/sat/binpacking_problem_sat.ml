@@ -21,7 +21,7 @@ let sprintf  = Printf.sprintf
 
 let init_matrix m n f = Array.(init m (fun i -> init n (fun j -> f i j)))
 
-let binpacking_problem_sat () =
+let main () =
   (* Solves a bin-packing problem using the CP-SAT solver. *)
   (* Data. *)
   let bin_capacity = 100 in
@@ -93,5 +93,5 @@ let binpacking_problem_sat () =
   printf "  - branches  : %d\n" num_branches;
   printf "  - wall time : %es\n" wall_time
 
-let _ = binpacking_problem_sat ()
+let _ = main ()
 

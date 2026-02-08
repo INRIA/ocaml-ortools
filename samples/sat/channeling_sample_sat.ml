@@ -21,7 +21,7 @@ module Sat_parameters = Ortools.Sat_parameters
 
 let printf  = Format.printf
 
-let channeling_sample_sat () =
+let main () =
   (* Demonstrates how to link integer constraints together. *)
 
   (* Create the CP-SAT model. *)
@@ -69,5 +69,5 @@ let channeling_sample_sat () =
   ignore (CPSAT.solve ~observer ~parameters model);
   Format.close_box ()
 
-let _ = channeling_sample_sat ()
+let _ = main ()
 
