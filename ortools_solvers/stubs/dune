@@ -59,7 +59,7 @@
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
                    -L%{read-lines:brew_prefix.sexp}/lib
-                   -lortools -Lortools_solvers
+                   -lortools -Lortools_solvers/stubs
                    -labsl_log_internal_message
                    -labsl_raw_logging_internal
                    -labsl_raw_hash_set
