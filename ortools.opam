@@ -28,9 +28,6 @@ depends: [
   "dune"	{>= "3.21"}
   "pbrt"	{>= "4.0"}
   "odoc"	{with-doc}
-  "conf-cmake"	{build}
-  "sexplib0"	{build}
-  "csexp"	{build}
 ]
 
 build: [
