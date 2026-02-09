@@ -9,3 +9,7 @@
 (source (github inria/ocaml-ortools))
 (maintenance_intent "(latest)")
 
+(package (name ortools))
+
+(package (name ortools_solvers))
+

@@ -12,6 +12,7 @@
 (subdir libortools-build
   (rule
     (enabled_if (= %{ocaml-config:system} macosx))
+    (package ortools_solvers)
     (deps (source_tree ../libortools))
     (targets (dir build))
     (action (progn
@@ -51,6 +52,7 @@
 (subdir libortools-build
   (rule
     (enabled_if (<> %{ocaml-config:system} macosx))
+    (package ortools_solvers)
     (deps (source_tree ../libortools))
     (targets (dir build))
     (action (progn
