@@ -17,6 +17,7 @@
     (targets (dir build))
     (action (progn
       (run cmake
+             -DCMAKE_INSTALL_LIBDIR=lib
              -DCMAKE_CXX_STANDARD=17
              -DBUILD_absl=OFF
              -DBUILD_Protobuf=OFF
@@ -38,12 +39,10 @@
              -S ../libortools
              -B ./build)
       (run cmake --build ./build --config Release -j 8)
-      (with-stdout-to libortools.inc
+      (with-stdout-to libortools_files.sexp
          (pipe-stdout
             (echo "libortools.9.15.so\nlibortools.9.so\nlibortools.so\n")
-            (run ../gen_libortools.exe -copy)))
-      (with-stdout-to libortools_files.sexp
-         (echo "(libortools.9.15.so libortools.9.so libortools.so)"))
+            (run ../gen_libortools.exe)))
     ))
   )
 )
@@ -57,6 +56,7 @@
     (targets (dir build))
     (action (progn
       (run cmake
+             -DCMAKE_INSTALL_LIBDIR=lib
              -DCMAKE_CXX_STANDARD=20
              -DBUILD_absl=ON
              -DBUILD_Protobuf=ON
@@ -78,8 +78,6 @@
              -S ../libortools
              -B ./build)
       (run cmake --build ./build --config Release -j 8)
-      (with-stdout-to libortools.inc
-         (run ../gen_libortools.exe -copy build/libortools.sexp))
       (with-stdout-to libortools_files.sexp
          (run ../gen_libortools.exe build/libortools.sexp))
     ))

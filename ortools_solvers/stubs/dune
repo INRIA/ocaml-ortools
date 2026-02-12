@@ -1,6 +1,4 @@
 
-(dynamic_include ../libortools-build/libortools.inc)
-
 (library
   (enabled_if (<> %{ocaml-config:system} macosx))
   (name ortools_solvers)
@@ -17,22 +15,17 @@
            -I../libortools/abseil-cpp
            -I../libortools/protobuf/src
            -I../libortools/protobuf/third_party/utf8_range
-           -DOR_PROTO_DLL=
-           ; hack to ensure that libortools.so is copied to this
-           ; directory by the rule in libortools.inc <sigh>
-           -DDUNE_DEP=%{dep:libortools.so}))
+           -DOR_PROTO_DLL=))
   (libraries ortools threads)
   (library_flags :standard
                  -ccopt "-L$CAMLORIGIN"
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
-                   -lortools -Lortools_solvers/stubs
+                   -lortools
                    -labsl_log_internal_message
                    -labsl_raw_logging_internal
                    -labsl_raw_hash_set
-                   -lprotobuf
-                   "-Wl,-rpath,'$ORIGIN/../ortools_solvers/'"
-                   -Wl,-rpath,@loader_path/../ortools_solvers/)
+                   -lprotobuf)
 )
 
 (library
@@ -49,27 +42,27 @@
            -I../libortools
            -I../libortools-build/build
            -I%{read-lines:brew_prefix.sexp}/include
-           -DOR_PROTO_DLL=
-           ; hack to ensure that libortools.so is copied to this
-           ; directory by the rule in libortools.inc <sigh>
-           -DDUNE_DEP=%{dep:libortools.so}))
+           -DOR_PROTO_DLL=))
   (libraries ortools threads)
   (library_flags :standard
                  -ccopt "-L$CAMLORIGIN"
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
                    -L%{read-lines:brew_prefix.sexp}/lib
-                   -lortools -Lortools_solvers/stubs
+                   -lortools
                    -labsl_log_internal_message
                    -labsl_raw_logging_internal
                    -labsl_raw_hash_set
-                   -lprotobuf
-                   "-Wl,-rpath,'$ORIGIN/../ortools_solvers/'"
-                   -Wl,-rpath,@loader_path/../ortools_solvers/)
+                   -lprotobuf)
 )
 
 (rule
   (enabled_if (= %{ocaml-config:system} macosx))
   (package ortools_solvers)
   (action (with-stdout-to brew_prefix.sexp (run brew --prefix))))
+
+(install
+  (package ortools_solvers)
+  (files (include ../libortools-build/libortools_files.sexp))
+  (section libexec))
 

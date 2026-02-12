@@ -1,7 +1,7 @@
 
 open Sexplib0
 
-let build_path = "../libortools-build/build/"
+let build_path = "../libortools-build/build/lib/"
 
 let from_channel acc0 cin =
   let rec loop acc =
@@ -17,18 +17,6 @@ let add_contents acc0 path =
   let finally () = close_in cin in
   Fun.protect ~finally (fun () -> from_channel acc0 cin)
 
-let find_lib_path build_path libfile =
-  if Sys.file_exists (build_path ^ "lib64/" ^ libfile)
-  then build_path ^ "lib64/"
-  else build_path ^ "lib/"
-
-let copy lib_path file =
-  Sexp.(List [
-    Atom "rule";
-    List [
-      Atom "action";
-      List [Atom "copy"; Atom (lib_path ^ file); Atom file]]])
-
 let uniq xs =
   let rec f l ys =
     match ys with
@@ -40,33 +28,17 @@ let uniq xs =
   | [] -> []
   | x::xs' -> x :: f x xs'
 
-let lib_files = ref []
-let do_copy = ref false
-
-let anon_fun lib_file =
-  lib_files := lib_file :: !lib_files
-
-let spec_list = [
-  ("-copy", Arg.Set do_copy, "generate copy rules");
-]
-
 let () =
-  let () = Arg.parse spec_list anon_fun "gen_libortools [-copy] [<file>] ..." in
+  let lib_files = List.tl (Array.to_list Sys.argv) in
   let libs =
-    (if !lib_files = []
+    (if lib_files = []
      then from_channel [] stdin
-     else List.fold_left add_contents [] !lib_files)
+     else List.fold_left add_contents [] lib_files)
     |> List.sort String.compare
     |> uniq
   in
   if libs = [] then exit 0;
-  if !do_copy
-  then
-    let lib_path = find_lib_path build_path (List.hd libs) in
-    Format.(printf "@[<v>%a@]"
-             (pp_print_list Sexp.(pp_hum_indent 2))
-               (List.map (copy lib_path) libs))
-  else Format.(printf "@[<v>%a@]"
-         Sexp.(pp_hum_indent 2)
-         (Sexp.(List (List.map (fun x -> Atom x) libs))))
+  Format.(printf "@[<v>%a@]"
+    Sexp.(pp_hum_indent 2)
+    (Sexp.(List (List.map (fun x -> Atom (build_path ^ x)) libs))))
 

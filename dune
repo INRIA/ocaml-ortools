@@ -1,0 +1,9 @@
+
+(env
+  (_ (env-vars
+       (LIBRARY_PATH ortools_solvers/libortools-build/build/lib)
+       (DYLD_LIBRARY_PATH ortools_solvers/libortools-build/build/lib)
+       (LD_LIBRARY_PATH ortools_solvers/libortools-build/build/lib)
+     ))
+)
+
