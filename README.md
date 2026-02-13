@@ -19,6 +19,14 @@ This project provides two packages:
 
 Online docs: https://inria.github.io/ocaml-ortools/
 
+```
+opam install ocamlfind ortools_solvers
+ocamlfind ocamlopt -o cp_is_fun_sat.exe \
+            -package ortools_solvers -linkpkg \
+            samples/sat/cp_is_fun_sat.ml
+./cp_is_fun_sat.exe
+```
+
 ## TODOs
 
 * Finish migrating OR-Tools `sat/samples`
