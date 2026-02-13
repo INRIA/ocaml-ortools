@@ -67,8 +67,8 @@ depexts: [
   ["libbz2-dev"]	    {os-distribution = "debian"}
   ["bzip2-dev"]		    {os-distribution = "alpine"}
   ["bzip2"]		    {os-distribution = "archlinux"}
-  ["bzip2-libs"]	    {os-distribution = "centos-9"}
-  ["bzip2-libs"]	    {os-distribution = "centos-10"}
+  ["bzip2-devel"]	    {os-distribution = "centos-9"}
+  ["bzip2-devel"]	    {os-distribution = "centos-10"}
   ["bzip2-devel"]	    {os-distribution = "fedora"}
   ["bzip2"]		    {os-distribution = "freebsd"}
   ["bzip2"]		    {os-distribution = "openbsd"}
@@ -109,14 +109,12 @@ depexts: [
 ]
 
 x-ci-accept-failures: [
-  "debian-12"
-# "fedora-42"
-# "fedora-43"
-# "freebsd-14.3"
+  "debian-12"		# c++ compilation fails
   "opensuse-15.6"	# cannot compile with cmake
   "opensuse-16.0"	# incorrect paths in /usr/lib64/cmake/ZLIB/* files
+  "opensuse-tumbleweed"	# incorrect paths in /usr/lib64/cmake/ZLIB/* files
   "ubuntu-22.04"	# cmake is too old
-  "ubuntu-24.04"
+  "ubuntu-24.04"	# c++ compilation fails
   "cygwin"
   "msys2"
 ]
