@@ -11,7 +11,7 @@
     (flags :standard
            -std=c++20
            -I../libortools
-           -I../libortools-build/build
+           -I%{dep:../libortools-build/build}
            -I../libortools/abseil-cpp
            -I../libortools/protobuf/src
            -I../libortools/protobuf/third_party/utf8_range
@@ -40,7 +40,7 @@
     (flags :standard
            -std=c++20
            -I../libortools
-           -I../libortools-build/build
+           -I%{dep:../libortools-build/build}
            -I%{read-lines:brew_prefix.sexp}/include
            -DOR_PROTO_DLL=))
   (libraries ortools threads)
