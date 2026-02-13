@@ -54,9 +54,10 @@ depexts: [
   ["libz-dev"]		    {os-distribution = "debian"}
   ["zlib-dev"]		    {os-distribution = "alpine"}
   ["zlib"]		    {os-distribution = "arch"}
-  ["zlib-devel" "zlib-static"] {os-distribution = "centos-9"}
+  ["zlib-devel" "zlib-static"]
+			    {os-distribution = "centos" & os-version = "9"}
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
-			    {os-distribution = "centos-10"}
+			    {os-distribution = "centos" & os-version = "10"}
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
