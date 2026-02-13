@@ -53,8 +53,10 @@ depexts: [
   ["zlib"]		    {os = "macos" & os-distribution = "homebrew"}
   ["libz-dev"]		    {os-distribution = "debian"}
   ["zlib-dev"]		    {os-distribution = "alpine"}
-  ["zlib"]		    {os-distribution = "archinux"}
-  ["zlib-devel"]	    {os-distribution = "centos"}
+  ["zlib"]		    {os-distribution = "arch"}
+  ["zlib-devel" "zlib-static"] {os-distribution = "centos-9"}
+  ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
+			    {os-distribution = "centos-10"}
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
@@ -65,7 +67,7 @@ depexts: [
   ["bzip2"]		    {os = "macos" & os-distribution = "homebrew"}
   ["libbz2-dev"]	    {os-distribution = "debian"}
   ["bzip2-dev"]		    {os-distribution = "alpine"}
-  ["bzip2"]		    {os-distribution = "archlinux"}
+  ["bzip2"]		    {os-distribution = "arch"}
   ["bzip2-devel"]	    {os-distribution = "centos"}
   ["bzip2-devel"]	    {os-distribution = "fedora"}
   ["bzip2"]		    {os-distribution = "freebsd"}
@@ -77,7 +79,7 @@ depexts: [
   ["eigen@3"]		    {os = "macos" & os-distribution = "homebrew"}
   ["libeigen3-dev"]	    {os-distribution = "debian"}
   ["eigen-dev"]		    {os-distribution = "alpine"}
-  ["eigen3"]		    {os-distribution = "archlinux"}
+  ["eigen3"]		    {os-distribution = "arch"}
   ["eigen3"]		    {os-distribution = "centos"}
   ["eigen3-devel"]	    {os-distribution = "fedora"}
   ["eigen"]		    {os-distribution = "freebsd"}
@@ -89,7 +91,7 @@ depexts: [
   ["linux-headers"]	{os-distribution = "alpine"}
 
 ## brittle
-## debian, alpine, archlinux: build with OCaml ortools_solvers package
+## debian, alpine, arch: build with OCaml ortools_solvers package
 
   # abseil 20260107.0
   ["abseil"]		{os = "macos" & os-distribution = "homebrew"}
