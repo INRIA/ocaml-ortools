@@ -54,8 +54,7 @@ depexts: [
   ["libz-dev"]		    {os-distribution = "debian"}
   ["zlib-dev"]		    {os-distribution = "alpine"}
   ["zlib"]		    {os-distribution = "archinux"}
-  ["zlib-devel"]	    {os-distribution = "centos-9"}
-  ["zlib-devel"]	    {os-distribution = "centos-10"}
+  ["zlib-devel"]	    {os-distribution = "centos"}
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
@@ -67,8 +66,7 @@ depexts: [
   ["libbz2-dev"]	    {os-distribution = "debian"}
   ["bzip2-dev"]		    {os-distribution = "alpine"}
   ["bzip2"]		    {os-distribution = "archlinux"}
-  ["bzip2-devel"]	    {os-distribution = "centos-9"}
-  ["bzip2-devel"]	    {os-distribution = "centos-10"}
+  ["bzip2-devel"]	    {os-distribution = "centos"}
   ["bzip2-devel"]	    {os-distribution = "fedora"}
   ["bzip2"]		    {os-distribution = "freebsd"}
   ["bzip2"]		    {os-distribution = "openbsd"}
@@ -80,8 +78,7 @@ depexts: [
   ["libeigen3-dev"]	    {os-distribution = "debian"}
   ["eigen-dev"]		    {os-distribution = "alpine"}
   ["eigen3"]		    {os-distribution = "archlinux"}
-  ["eigen3"]		    {os-distribution = "centos-9"}
-  ["eigen3"]		    {os-distribution = "centos-10"}
+  ["eigen3"]		    {os-distribution = "centos"}
   ["eigen3-devel"]	    {os-distribution = "fedora"}
   ["eigen"]		    {os-distribution = "freebsd"}
   ["eigen3"]		    {os-distribution = "openbsd"}
