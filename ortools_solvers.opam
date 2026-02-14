@@ -61,8 +61,8 @@ depexts: [
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
-  ["zlib"]		    {os-distribution = "suse"}
-  ["zlib"]		    {os-distribution = "opensuse"}
+  ["zlib-devel"]	    {os-family = "suse"}
+  ["zlib-devel"]	    {os-family = "opensuse"}
   ["zlib1g-dev"]	    {os-distribution = "ubuntu"}
 
   # 1.0.8
@@ -74,8 +74,8 @@ depexts: [
   ["bzip2-devel"]	    {os-distribution = "fedora"}
   ["bzip2"]		    {os-distribution = "freebsd"}
   ["bzip2"]		    {os-distribution = "openbsd"}
-  ["libbz2"]		    {os-distribution = "suse"}
-  ["libbz2"]		    {os-distribution = "opensuse"}
+  ["libbz2-devel"]	    {os-family = "suse"}
+  ["libbz2-devel"]	    {os-family = "opensuse"}
   ["libbz2-dev"]	    {os-distribution = "ubuntu"}
 
   # 3.4.1
@@ -87,27 +87,27 @@ depexts: [
   ["eigen3-devel"]	    {os-distribution = "fedora"}
   ["eigen"]		    {os-distribution = "freebsd"}
   ["eigen3"]		    {os-distribution = "openbsd"}
-  ["eigen3"]		    {os-distribution = "suse"}
-  ["eigen3"]		    {os-distribution = "opensuse"}
+  ["eigen3-devel"]	    {os-family = "suse"}
+  ["eigen3-devel"]	    {os-family = "opensuse"}
   ["libeigen3-dev"]	    {os-distribution = "ubuntu"}
 
   # needed to compile abseil (linux/futex.h)
-  ["linux-headers"]	{os-distribution = "alpine"}
+  ["linux-headers"]	    {os-distribution = "alpine"}
 
 ## brittle
 ## debian, alpine, arch: build with OCaml ortools_solvers package
 
   # abseil 20260107.0
-  ["abseil"]		{os = "macos" & os-distribution = "homebrew"}
+  ["abseil"]		    {os = "macos" & os-distribution = "homebrew"}
 
   # protobuf 33.4
-  ["protobuf"]		{os = "macos" & os-distribution = "homebrew"}
+  ["protobuf"]		    {os = "macos" & os-distribution = "homebrew"}
 
   # protobuf-c 1.5.2
-  ["protobuf-c"]	{os = "macos" & os-distribution = "homebrew"}
+  ["protobuf-c"]	    {os = "macos" & os-distribution = "homebrew"}
 
   # re2 2025-11-05
-  ["re2"]		{os = "macos" & os-distribution = "homebrew"}
+  ["re2"]		    {os = "macos" & os-distribution = "homebrew"}
 
 ]
 
@@ -117,6 +117,11 @@ x-ci-accept-failures: [
   "ubuntu-24.04"	# c++ compilation fails
   "centos-9"		# c++ compilation fails
   "s390x"		# c++ compilation fails
+  "opensuse-15.6"	# cannot compile with cmake
+  "opensuse-16.0"	# zlib-devel conflicts with zlib-ng-compat-devel
+			# and the zlib-ng-compat-devel cmake files are wrong
+  "opensuse-tumbleweed"	# zlib-devel conflicts with zlib-ng-compat-devel
+			# and the zlib-ng-compat-devel cmake files are wrong
   "cygwin"
   "msys2"
 ]
