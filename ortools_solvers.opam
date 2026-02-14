@@ -61,10 +61,8 @@ depexts: [
   ["zlib-ng-compat-devel" "zlib-ng-compat-static"]
 			    {os-distribution = "fedora"}
   ["libzip"]		    {os-distribution = "freebsd"}
-  ["zlib-devel" "zlib-static"]
-			    {os-distribution = "suse"}
-  ["zlib-devel" "zlib-static"]
-			    {os-distribution = "opensuse"}
+  ["zlib"]		    {os-distribution = "suse"}
+  ["zlib"]		    {os-distribution = "opensuse"}
   ["zlib1g-dev"]	    {os-distribution = "ubuntu"}
 
   # 1.0.8
@@ -76,8 +74,8 @@ depexts: [
   ["bzip2-devel"]	    {os-distribution = "fedora"}
   ["bzip2"]		    {os-distribution = "freebsd"}
   ["bzip2"]		    {os-distribution = "openbsd"}
-  ["libbz2-devel"]	    {os-distribution = "suse"}
-  ["libbz2-devel"]	    {os-distribution = "opensuse"}
+  ["libbz2"]		    {os-distribution = "suse"}
+  ["libbz2"]		    {os-distribution = "opensuse"}
   ["libbz2-dev"]	    {os-distribution = "ubuntu"}
 
   # 3.4.1
@@ -89,8 +87,8 @@ depexts: [
   ["eigen3-devel"]	    {os-distribution = "fedora"}
   ["eigen"]		    {os-distribution = "freebsd"}
   ["eigen3"]		    {os-distribution = "openbsd"}
-  ["eigen3-devel"]	    {os-distribution = "suse"}
-  ["eigen3-devel"]	    {os-distribution = "opensuse"}
+  ["eigen3"]		    {os-distribution = "suse"}
+  ["eigen3"]		    {os-distribution = "opensuse"}
   ["libeigen3-dev"]	    {os-distribution = "ubuntu"}
 
   # needed to compile abseil (linux/futex.h)
