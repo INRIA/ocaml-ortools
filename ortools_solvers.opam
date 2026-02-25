@@ -28,7 +28,6 @@ depends: [
   "conf-cmake"	{build}
   "conf-zlib"   {build}
   "conf-bzip2"  {build}
-  "conf-eigen3" {build & os = "macos" & os-distribution = "homebrew"}
   "sexplib0"	{build}
   "csexp"	{build}
   "odoc"	{with-doc}

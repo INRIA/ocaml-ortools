@@ -40,17 +40,6 @@ add_compile_options(-Wno-switch)
 
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     execute_process(
-        COMMAND brew --prefix eigen@3
-	RESULT_VARIABLE BREW_EIGEN3
-	OUTPUT_VARIABLE BREW_EIGEN3_PREFIX
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if (BREW_EIGEN3 EQUAL 0 AND EXISTS "${BREW_EIGEN3_PREFIX}")
-	message(STATUS "Found eigen@3 keg installed by Homebrew at ${BREW_EIGEN3_PREFIX}")
-	list(APPEND CMAKE_PREFIX_PATH ${BREW_EIGEN3_PREFIX})
-    endif()
-
-    execute_process(
         COMMAND brew --prefix bzip2
 	RESULT_VARIABLE BREW_BZIP2
 	OUTPUT_VARIABLE BREW_BZIP2_PREFIX
