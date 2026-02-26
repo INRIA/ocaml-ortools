@@ -8,6 +8,13 @@ endif()
 
 project(Eigen3)
 
+# No need for external sparse matrix algorithms and they can complicate builds
+set(CMAKE_DISABLE_FIND_PACKAGE_CHOLMOD TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_KLU TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_UMFPACK TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_PASTIX TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_SuperLU TRUE)
+
 # guard against in-source builds
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
