@@ -36,6 +36,7 @@ else()
 	    if(LINE MATCHES "^ID=(.*)")
 		set(DISTRIBUTION_ID "${CMAKE_MATCH_1}")
 		string(REPLACE "\"" "" DISTRIBUTION_ID "${DISTRIBUTION_ID}")
+		string(TOLOWER "${DISTRIBUTION_ID}" DISTRIBUTION_ID)
 	    endif()
 
 	    if(LINE MATCHES "^VERSION_ID=(.*)")
@@ -56,7 +57,7 @@ if(APPLE)
     add_compile_options(-Wno-nullability-completeness)
 else()
     set(CMAKE_CXX_STANDARD 20)
-    if(DISTRIBUTION_ID STREQUAL "Ubuntu"
+    if(DISTRIBUTION_ID STREQUAL "ubuntu"
 	    AND DISTRIBUTION_VERSION VERSION_LESS "24.00")
 	set(CMAKE_CXX_STANDARD 17)
     endif()
