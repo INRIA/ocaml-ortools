@@ -27,7 +27,6 @@ else()
     set(CMAKE_CXX_STANDARD 20)
     add_compile_options(-Wno-narrowing)
     add_compile_options(-Wno-return-type)
-    add_compile_options(-fpermissive)
     # for ubuntu?
     # add_compile_options(-Wno-template-id-cdtor)
     # add_compile_options(-Wno-Wstringop-overread)
