@@ -13,7 +13,7 @@
 
 # We are using FetchContent OVERRIDE_FIND_PACKAGE introduced in 3.24
 # And SYSTEM introduced in 3.25.
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 
 # ##############################################################################
 # SWIG (WIN32)

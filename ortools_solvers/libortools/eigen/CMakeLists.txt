@@ -1,5 +1,5 @@
 # cmake_minimum_require must be the first command of the file
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22)
 
 # option() honors normal variables.
 if (POLICY CMP0077)
