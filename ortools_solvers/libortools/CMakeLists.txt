@@ -29,15 +29,21 @@ else()
     if(EXISTS "/etc/os-release")
 	file(READ "/etc/os-release" OS_RELEASE_CONTENT)
 
-	string(REGEX MATCH "^ID=([^\n]*)" _ ${OS_RELEASE_CONTENT})
-	set(DISTRIBUTION_ID ${CMAKE_MATCH_1})
+	string(REPLACE "\n" ";" OS_RELEASE_LIST "${OS_RELEASE_CONTENT}")
 
-	string(REGEX MATCH "^VERSION_ID=\"?([0-9.]+)\"?" _ ${OS_RELEASE_CONTENT})
-	set(DISTRIBUTION_VERSION ${CMAKE_MATCH_1})
+	foreach(LINE IN LISTS OS_RELEASE_LIST)
 
-	# Remove quotes if they exist
-	string(REPLACE "\"" "" DISTRIBUTION_ID "${DISTRIBUTION_ID}")
-	string(REPLACE "\"" "" DISTRIBUTION_VERSION "${DISTRIBUTION_VERSION}")
+	    if(LINE MATCHES "^ID=(.*)")
+		set(DISTRIBUTION_ID "${CMAKE_MATCH_1}")
+		string(REPLACE "\"" "" DISTRIBUTION_ID "${DISTRIBUTION_ID}")
+	    endif()
+
+	    if(LINE MATCHES "^VERSION_ID=(.*)")
+		set(DISTRIBUTION_VERSION "${CMAKE_MATCH_1}")
+		string(REPLACE "\"" "" DISTRIBUTION_VERSION "${DISTRIBUTION_VERSION}")
+	    endif()
+
+	endforeach()
 
 	message(STATUS "Distribution (/etc/os-release): ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
     endif()
