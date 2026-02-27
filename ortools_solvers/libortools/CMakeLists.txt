@@ -24,22 +24,22 @@ if(LSB_RELEASE_EXEC)
 		    DISTRIBUTION_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs OUTPUT_VARIABLE
 		    DISTRIBUTION_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "Distribution: ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
+    message(STATUS "Distribution (lsb-release): ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
 else()
     if(EXISTS "/etc/os-release")
 	file(READ "/etc/os-release" OS_RELEASE_CONTENT)
 
-	string(REGEX MATCH "ID=([^\n]*)" _ ${OS_RELEASE_CONTENT})
+	string(REGEX MATCH "^ID=([^\n]*)" _ ${OS_RELEASE_CONTENT})
 	set(DISTRIBUTION_ID ${CMAKE_MATCH_1})
 
-	string(REGEX MATCH "VERSION_ID=\"?([0-9.]+)\"?" _ ${OS_RELEASE_CONTENT})
+	string(REGEX MATCH "^VERSION_ID=\"?([0-9.]+)\"?" _ ${OS_RELEASE_CONTENT})
 	set(DISTRIBUTION_VERSION ${CMAKE_MATCH_1})
 
 	# Remove quotes if they exist
 	string(REPLACE "\"" "" DISTRIBUTION_ID "${DISTRIBUTION_ID}")
 	string(REPLACE "\"" "" DISTRIBUTION_VERSION "${DISTRIBUTION_VERSION}")
 
-	message(STATUS "Distribution: ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
+	message(STATUS "Distribution (/etc/os-release): ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
     endif()
 endif()
 
