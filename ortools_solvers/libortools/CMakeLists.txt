@@ -18,6 +18,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Enable output of compile commands during generation.
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile command" ON)
 
+find_program(LSB_RELEASE_EXEC lsb_release)
+if(LSB_RELEASE_EXEC)
+    execute_process(COMMAND ${LSB_RELEASE_EXEC} -is OUTPUT_VARIABLE
+		    DISTRIBUTION_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs OUTPUT_VARIABLE
+		    DISTRIBUTION_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "Linux Distribution: ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
+endif()
+
 if(APPLE)
     set(CMAKE_CXX_STANDARD 17)
     add_compile_options(-Wno-c++20-extensions)
@@ -25,6 +34,10 @@ if(APPLE)
     add_compile_options(-Wno-nullability-completeness)
 else()
     set(CMAKE_CXX_STANDARD 20)
+    if(DISTRIBUTION_ID STREQUAL "Ubuntu"
+	    AND DISTRIBUTION_VERSION VERSION_LESS "24.00")
+	set(CMAKE_CXX_STANDARD 17)
+    endif()
     add_compile_options(-Wno-narrowing)
     add_compile_options(-Wno-return-type)
     # for ubuntu?
@@ -33,6 +46,8 @@ else()
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+message(STATUS "CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
 
 add_compile_options(-Wno-deprecated)
 add_compile_options(-Wno-deprecated-declarations)
