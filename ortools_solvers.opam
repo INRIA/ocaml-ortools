@@ -26,11 +26,11 @@ depends: [
   "dune"	{>= "3.21"}
   "ortools"	{>= "9.15"}
   "conf-cmake"	{build}
-  "conf-zlib"   {build}
-  "conf-bzip2"  {build}
   "sexplib0"	{build}
   "csexp"	{build}
   "odoc"	{with-doc}
+  "conf-zlib"
+  "conf-bzip2"
 ]
 
 build: [
@@ -52,20 +52,20 @@ depexts: [
   # debian, alpine, arch: build with OCaml ortools_solvers package
 
   # needed to compile abseil (linux/futex.h)
-  ["linux-headers"]	    {os-distribution = "alpine"}
+  ["linux-headers"]	    {build & os-distribution = "alpine"}
 
   # abseil 20260107.0
-  ["abseil"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["abseil"]		    {build & os = "macos" & os-distribution = "homebrew"}
 
 
   # protobuf 33.4
-  ["protobuf"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["protobuf"]		    {build & os = "macos" & os-distribution = "homebrew"}
 
   # protobuf-c 1.5.2
-  ["protobuf-c"]	    {os = "macos" & os-distribution = "homebrew"}
+  ["protobuf-c"]	    {build & os = "macos" & os-distribution = "homebrew"}
 
   # re2 2025-11-05
-  ["re2"]		    {os = "macos" & os-distribution = "homebrew"}
+  ["re2"]		    {build & os = "macos" & os-distribution = "homebrew"}
 ]
 
 x-ci-accept-failures: [
