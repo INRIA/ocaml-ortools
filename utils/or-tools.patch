@@ -1,16 +1,99 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 69bf10b..648cf7a 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -18,6 +18,18 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+diff --git b/ortools_solvers/libortools/CMakeLists.txt a/ortools_solvers/libortools/CMakeLists.txt
+index 69bf10b..5aa1712 100644
+--- b/ortools_solvers/libortools/CMakeLists.txt
++++ a/ortools_solvers/libortools/CMakeLists.txt
+@@ -12,12 +12,100 @@
+ # limitations under the License.
+ 
+ # This file is just an orchestration
+-cmake_minimum_required(VERSION 3.24)
++cmake_minimum_required(VERSION 3.22)
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ 
  # Enable output of compile commands during generation.
  option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile command" ON)
  
++find_program(LSB_RELEASE_EXEC lsb_release)
++if(LSB_RELEASE_EXEC)
++    execute_process(COMMAND ${LSB_RELEASE_EXEC} -is OUTPUT_VARIABLE
++		    DISTRIBUTION_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
++    execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs OUTPUT_VARIABLE
++		    DISTRIBUTION_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
++    message(STATUS "Distribution (lsb-release): ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
++else()
++    if(EXISTS "/etc/os-release")
++	file(READ "/etc/os-release" OS_RELEASE_CONTENT)
++
++	string(REPLACE "\n" ";" OS_RELEASE_LIST "${OS_RELEASE_CONTENT}")
++
++	foreach(LINE IN LISTS OS_RELEASE_LIST)
++
++	    if(LINE MATCHES "^ID=(.*)")
++		set(DISTRIBUTION_ID "${CMAKE_MATCH_1}")
++		string(REPLACE "\"" "" DISTRIBUTION_ID "${DISTRIBUTION_ID}")
++		string(TOLOWER "${DISTRIBUTION_ID}" DISTRIBUTION_ID)
++	    endif()
++
++	    if(LINE MATCHES "^VERSION_ID=(.*)")
++		set(DISTRIBUTION_VERSION "${CMAKE_MATCH_1}")
++		string(REPLACE "\"" "" DISTRIBUTION_VERSION "${DISTRIBUTION_VERSION}")
++	    endif()
++
++	endforeach()
++
++	message(STATUS "Distribution (/etc/os-release): ${DISTRIBUTION_ID} ${DISTRIBUTION_VERSION}")
++    endif()
++endif()
++
++if(APPLE)
++    set(CMAKE_CXX_STANDARD 17)
++    add_compile_options(-Wno-c++20-extensions)
++    add_compile_options(-Wno-return-stack-address)
++    add_compile_options(-Wno-nullability-completeness)
++else()
++    set(CMAKE_CXX_STANDARD 20)
++    if(DISTRIBUTION_ID STREQUAL "ubuntu"
++	    AND DISTRIBUTION_VERSION VERSION_LESS "24.00")
++	set(CMAKE_CXX_STANDARD 17)
++    endif()
++    add_compile_options(-Wno-narrowing)
++    add_compile_options(-Wno-return-type)
++    # for ubuntu?
++    # add_compile_options(-Wno-template-id-cdtor)
++    # add_compile_options(-Wno-Wstringop-overread)
++endif()
++set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
++set(CMAKE_CXX_EXTENSIONS OFF)
++
++message(STATUS "CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
++
 +add_compile_options(-Wno-deprecated)
-+add_compile_options(-Wno-c++20-extensions)
-+add_compile_options(-Wno-return-stack-address)
++add_compile_options(-Wno-deprecated-declarations)
 +add_compile_options(-Wno-switch)
-+add_compile_options(-Wno-nullability-completeness)
++
++if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
++    execute_process(
++        COMMAND brew --prefix bzip2
++	RESULT_VARIABLE BREW_BZIP2
++	OUTPUT_VARIABLE BREW_BZIP2_PREFIX
++        OUTPUT_STRIP_TRAILING_WHITESPACE
++    )
++    if (BREW_BZIP2 EQUAL 0 AND EXISTS "${BREW_BZIP2_PREFIX}")
++	message(STATUS "Found bzip2 keg installed by Homebrew at ${BREW_BZIP2_PREFIX}")
++	list(APPEND CMAKE_PREFIX_PATH ${BREW_BZIP2_PREFIX})
++    endif()
++
++    execute_process(
++        COMMAND brew --prefix zlib
++	RESULT_VARIABLE BREW_ZLIB
++	OUTPUT_VARIABLE BREW_ZLIB_PREFIX
++        OUTPUT_STRIP_TRAILING_WHITESPACE
++    )
++    if (BREW_ZLIB EQUAL 0 AND EXISTS "${BREW_ZLIB_PREFIX}")
++	message(STATUS "Found zlib keg installed by Homebrew at ${BREW_ZLIB_PREFIX}")
++	list(APPEND CMAKE_PREFIX_PATH ${BREW_ZLIB_PREFIX})
++    endif()
++endif()
 +
 +# ocaml-ortools: collect all targets into a list
 +macro(add_library _target)
@@ -21,18 +104,27 @@ index 69bf10b..648cf7a 100644
  include(utils)
  set_version(VERSION RELEASE)
  
-@@ -28,6 +40,10 @@ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION} release: ${RELEASE}"
+@@ -28,16 +116,12 @@ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION} release: ${RELEASE}"
  #message(STATUS "minor: ${PROJECT_VERSION_MINOR}")
  #message(STATUS "patch: ${PROJECT_VERSION_PATCH}")
  
+-if(MSVC)
+-  set(CMAKE_CXX_STANDARD 20)
+-else()
+-  set(CMAKE_CXX_STANDARD 17)
 +if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dylib")
 +    set(CMAKE_SHARED_LIBRARY_SUFFIX  ".so")
-+endif()
-+
- if(MSVC)
-   set(CMAKE_CXX_STANDARD 20)
- else()
-@@ -470,3 +486,39 @@ endforeach()
+ endif()
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+ # Set max os target version.
+-set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
++# set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+ 
+ # Default Build Type to be Release
+ get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+@@ -470,3 +554,46 @@ endforeach()
  foreach(EXAMPLES IN ITEMS contrib cpp dotnet java python)
    add_subdirectory(examples/${EXAMPLES})
  endforeach()
@@ -47,6 +139,10 @@ index 69bf10b..648cf7a 100644
 +set(shared_libs "")
 +set(static_libs "")
 +foreach(t ${allTargets})
++    # Fedora: need to skip the induced zlib target
++    if(t MATCHES "^ZLIB::(ZLIB|ZLIBSTATIC|zlibstatic)$")
++	continue()
++    endif()
 +    if(t MATCHES "::|(^utf8_(range|validity)$)")
 +	get_target_property(type ${t} TYPE)
 +	if(type STREQUAL "SHARED_LIBRARY")
@@ -71,11 +167,23 @@ index 69bf10b..648cf7a 100644
 +endforeach()
 +
 +string(REPLACE ";" "\n" lib_files_nl "${lib_files}")
-+file(GENERATE OUTPUT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libortools.sexp" CONTENT "${lib_files_nl}")
-diff --git a/cmake/dependencies/CMakeLists.txt b/cmake/dependencies/CMakeLists.txt
-index 6621130..b6dc349 100644
---- a/cmake/dependencies/CMakeLists.txt
-+++ b/cmake/dependencies/CMakeLists.txt
++message(STATUS "Library Output Directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
++file(GENERATE OUTPUT "libortools.sexp" CONTENT "${lib_files_nl}")
++file(GENERATE OUTPUT "libdir.sexp" CONTENT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
++
+diff --git b/ortools_solvers/libortools/cmake/dependencies/CMakeLists.txt a/ortools_solvers/libortools/cmake/dependencies/CMakeLists.txt
+index 6621130..383440e 100644
+--- b/ortools_solvers/libortools/cmake/dependencies/CMakeLists.txt
++++ a/ortools_solvers/libortools/cmake/dependencies/CMakeLists.txt
+@@ -13,7 +13,7 @@
+ 
+ # We are using FetchContent OVERRIDE_FIND_PACKAGE introduced in 3.24
+ # And SYSTEM introduced in 3.25.
+-cmake_minimum_required(VERSION 3.25)
++cmake_minimum_required(VERSION 3.22)
+ 
+ # ##############################################################################
+ # SWIG (WIN32)
 @@ -112,17 +112,11 @@ if(BUILD_absl)
    list(APPEND CMAKE_MESSAGE_INDENT "  ")
    FetchContent_Declare(
@@ -129,3 +237,180 @@ index 6621130..b6dc349 100644
    )
    set(RE2_BUILD_TESTING OFF)
    FetchContent_MakeAvailable(re2)
+@@ -198,13 +178,7 @@ if(BUILD_Eigen3)
+   list(APPEND CMAKE_MESSAGE_INDENT "  ")
+   FetchContent_Declare(
+     eigen3
+-    GIT_REPOSITORY "https://gitlab.com/libeigen/eigen.git"
+-    GIT_TAG "3.4.0"
+-    GIT_SHALLOW TRUE
+-    UPDATE_COMMAND git reset --hard
+-    PATCH_COMMAND git apply --ignore-whitespace
+-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/eigen3-3.4.0.patch"
+-    SYSTEM
++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/eigen"
+   )
+   set(EIGEN_MPL2_ONLY ON)
+   set(EIGEN_BUILD_PKGCONFIG OFF)
+diff --git b/ortools_solvers/libortools/cmake/host.CMakeLists.txt a/ortools_solvers/libortools/cmake/host.CMakeLists.txt
+index b5d9951..1d04f83 100644
+--- b/ortools_solvers/libortools/cmake/host.CMakeLists.txt
++++ a/ortools_solvers/libortools/cmake/host.CMakeLists.txt
+@@ -11,7 +11,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-cmake_minimum_required(VERSION 3.24)
++cmake_minimum_required(VERSION 3.22)
+ 
+ # fetch_git_dependency()
+ #
+diff --git b/ortools_solvers/libortools/ortools/constraint_solver/routing_filter_committables.h a/ortools_solvers/libortools/ortools/constraint_solver/routing_filter_committables.h
+index 6e2ff9d..f8a9a77 100644
+--- b/ortools_solvers/libortools/ortools/constraint_solver/routing_filter_committables.h
++++ a/ortools_solvers/libortools/ortools/constraint_solver/routing_filter_committables.h
+@@ -58,7 +58,7 @@ template <typename T>
+ class CommittableArray {
+  public:
+   // Makes a vector with initial elements all committed to value.
+-  CommittableArray<T>(size_t num_elements, const T& value)
++  CommittableArray(size_t num_elements, const T& value)
+       : elements_(num_elements, {value, value}), changed_(num_elements) {}
+ 
+   // Return the size of the vector.
+diff --git b/utils/or-tools.patch a/utils/or-tools.patch
+index 236d322..7967e86 100644
+--- b/utils/or-tools.patch
++++ a/utils/or-tools.patch
+@@ -0,0 +1,131 @@
++diff --git a/CMakeLists.txt b/CMakeLists.txt
++index 69bf10b..648cf7a 100644
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -18,6 +18,18 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
++ # Enable output of compile commands during generation.
++ option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile command" ON)
++ 
+++add_compile_options(-Wno-deprecated)
+++add_compile_options(-Wno-c++20-extensions)
+++add_compile_options(-Wno-return-stack-address)
+++add_compile_options(-Wno-switch)
+++add_compile_options(-Wno-nullability-completeness)
+++
+++# ocaml-ortools: collect all targets into a list
+++macro(add_library _target)
+++    _add_library(${_target} ${ARGN})
+++    set_property(GLOBAL APPEND PROPERTY GlobalTargetList ${_target})
+++endmacro()
+++
++ include(utils)
++ set_version(VERSION RELEASE)
++ 
++@@ -28,6 +40,10 @@ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION} release: ${RELEASE}"
++ #message(STATUS "minor: ${PROJECT_VERSION_MINOR}")
++ #message(STATUS "patch: ${PROJECT_VERSION_PATCH}")
++ 
+++if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dylib")
+++    set(CMAKE_SHARED_LIBRARY_SUFFIX  ".so")
+++endif()
+++
++ if(MSVC)
++   set(CMAKE_CXX_STANDARD 20)
++ else()
++@@ -470,3 +486,39 @@ endforeach()
++ foreach(EXAMPLES IN ITEMS contrib cpp dotnet java python)
++   add_subdirectory(examples/${EXAMPLES})
++ endforeach()
+++
+++# ocaml-ortools: generate <build>/lib/libraries.sexp
+++
+++message(STATUS "Generating library list")
+++
+++# Gather all shared library targets
+++get_property(allTargets GLOBAL PROPERTY GlobalTargetList)
+++
+++set(shared_libs "")
+++set(static_libs "")
+++foreach(t ${allTargets})
+++    if(t MATCHES "::|(^utf8_(range|validity)$)")
+++	get_target_property(type ${t} TYPE)
+++	if(type STREQUAL "SHARED_LIBRARY")
+++	    list(APPEND shared_libs ${t})
+++	endif()
+++	if(type STREQUAL "STATIC_LIBRARY")
+++	    list(APPEND static_libs ${t})
+++	endif()
+++    endif()
+++endforeach()
+++
+++set(lib_files "")
+++foreach(t ${shared_libs})
+++    list(APPEND lib_files "$<TARGET_FILE_NAME:${t}>")
+++    if(NOT t MATCHES "^((absl|protobuf)::)|(utf8_(range|validity)$)")
+++	list(APPEND lib_files "$<TARGET_SONAME_FILE_NAME:${t}>")
+++    endif()
+++    list(APPEND lib_files "$<TARGET_LINKER_FILE_NAME:${t}>")
+++endforeach()
+++foreach(t ${static_libs})
+++    list(APPEND lib_files "$<TARGET_FILE_NAME:${t}>")
+++endforeach()
+++
+++string(REPLACE ";" "\n" lib_files_nl "${lib_files}")
+++file(GENERATE OUTPUT "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libortools.sexp" CONTENT "${lib_files_nl}")
++diff --git a/cmake/dependencies/CMakeLists.txt b/cmake/dependencies/CMakeLists.txt
++index 6621130..b6dc349 100644
++--- a/cmake/dependencies/CMakeLists.txt
+++++ b/cmake/dependencies/CMakeLists.txt
++@@ -112,17 +112,11 @@ if(BUILD_absl)
++   list(APPEND CMAKE_MESSAGE_INDENT "  ")
++   FetchContent_Declare(
++     absl
++-    GIT_REPOSITORY "https://github.com/abseil/abseil-cpp.git"
++-    GIT_TAG "20250814.1"
++-    GIT_SHALLOW TRUE
++-    UPDATE_COMMAND git reset --hard
++-    PATCH_COMMAND git apply --ignore-whitespace
++-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/abseil-cpp-20250814.1.patch"
++-    OVERRIDE_FIND_PACKAGE
++-    SYSTEM
+++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/abseil-cpp"
++   )
++-  set(ABSL_USE_SYSTEM_INCLUDES ON)
+++  set(ABSL_USE_SYSTEM_INCLUDES OFF)
++   # We want Abseil to declare what C++ standard it was compiled with.
+++  set(ABSL_BUILD_SHARED_LIBS ON)
++   set(ABSL_PROPAGATE_CXX_STD ON)
++   if(OR_TOOLS_BUILD_TESTING)
++     set(ABSL_BUILD_TEST_HELPERS ON)
++@@ -148,15 +142,7 @@ if(BUILD_Protobuf)
++   list(APPEND CMAKE_MESSAGE_INDENT "  ")
++   FetchContent_Declare(
++     Protobuf
++-    GIT_REPOSITORY "https://github.com/protocolbuffers/protobuf.git"
++-    GIT_TAG "v33.1"
++-    GIT_SHALLOW TRUE
++-    GIT_SUBMODULES ""
++-    UPDATE_COMMAND git reset --hard
++-    PATCH_COMMAND git apply --ignore-whitespace
++-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/protobuf-v33.1.patch"
++-    OVERRIDE_FIND_PACKAGE # Make package visible for "protobuf-matchers" below
++-    SYSTEM
+++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/protobuf"
++   )
++   set(protobuf_BUILD_TESTS OFF)
++   set(protobuf_BUILD_SHARED_LIBS ON)
++@@ -176,13 +162,7 @@ if(BUILD_re2)
++   list(APPEND CMAKE_MESSAGE_INDENT "  ")
++   FetchContent_Declare(
++     re2
++-    GIT_REPOSITORY "https://github.com/google/re2.git"
++-    GIT_TAG "2025-08-12"
++-    GIT_SHALLOW TRUE
++-    UPDATE_COMMAND git reset --hard
++-    PATCH_COMMAND git apply --ignore-whitespace
++-    "${CMAKE_CURRENT_LIST_DIR}/../../patches/re2-2025-08-12.patch"
++-    SYSTEM
+++    SOURCE_DIR "${CMAKE_SOURCE_DIR}/re2"
++   )
++   set(RE2_BUILD_TESTING OFF)
++   FetchContent_MakeAvailable(re2)

@@ -1,0 +1,48 @@
+diff --git b/ortools_solvers/libortools/eigen/CMakeLists.txt a/ortools_solvers/libortools/eigen/CMakeLists.txt
+index f3e69b8..3286dc5 100644
+--- b/ortools_solvers/libortools/eigen/CMakeLists.txt
++++ a/ortools_solvers/libortools/eigen/CMakeLists.txt
+@@ -1,8 +1,20 @@
+ # cmake_minimum_require must be the first command of the file
+-cmake_minimum_required(VERSION 3.5.0)
++cmake_minimum_required(VERSION 3.22)
++
++# option() honors normal variables.
++if (POLICY CMP0077)
++  cmake_policy(SET CMP0077 NEW)
++endif()
+ 
+ project(Eigen3)
+ 
++# No need for external sparse matrix algorithms and they can complicate builds
++set(CMAKE_DISABLE_FIND_PACKAGE_CHOLMOD TRUE)
++set(CMAKE_DISABLE_FIND_PACKAGE_KLU TRUE)
++set(CMAKE_DISABLE_FIND_PACKAGE_UMFPACK TRUE)
++set(CMAKE_DISABLE_FIND_PACKAGE_PASTIX TRUE)
++set(CMAKE_DISABLE_FIND_PACKAGE_SuperLU TRUE)
++
+ # guard against in-source builds
+ 
+ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+@@ -21,6 +33,7 @@ if (NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Release")
+ endif()
+ 
++option(EIGEN_MPL2_ONLY "Only use MPL2 or more permissive license." OFF)
+ 
+ #############################################################################
+ # retrieve version information                                               #
+@@ -592,7 +605,12 @@ set ( EIGEN_VERSION_STRING ${EIGEN_VERSION_NUMBER} )
+ set ( EIGEN_VERSION_MAJOR  ${EIGEN_WORLD_VERSION} )
+ set ( EIGEN_VERSION_MINOR  ${EIGEN_MAJOR_VERSION} )
+ set ( EIGEN_VERSION_PATCH  ${EIGEN_MINOR_VERSION} )
+-set ( EIGEN_DEFINITIONS "")
++
++if(EIGEN_MPL2_ONLY)
++  set ( EIGEN_DEFINITIONS EIGEN_MPL2_ONLY)
++else()
++  set ( EIGEN_DEFINITIONS "")
++endif()
+ set ( EIGEN_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/${INCLUDE_INSTALL_DIR}" )
+ set ( EIGEN_ROOT_DIR ${CMAKE_INSTALL_PREFIX} )
+ 

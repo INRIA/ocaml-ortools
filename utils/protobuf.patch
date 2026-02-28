@@ -1,0 +1,37 @@
+diff --git b/ortools_solvers/libortools/protobuf/CMakeLists.txt a/ortools_solvers/libortools/protobuf/CMakeLists.txt
+index fd4a1ea..6a6a752 100644
+--- b/ortools_solvers/libortools/protobuf/CMakeLists.txt
++++ a/ortools_solvers/libortools/protobuf/CMakeLists.txt
+@@ -2,11 +2,6 @@
+ # to 3.26.
+ cmake_minimum_required(VERSION 3.16...3.26)
+ 
+-# Revert to old behavior for MSVC debug symbols.
+-if(POLICY CMP0141)
+-  cmake_policy(SET CMP0141 OLD)
+-endif()
+-
+ if(protobuf_VERBOSE)
+   message(STATUS "Protocol Buffers Configuring...")
+ endif()
+diff --git b/utils/protobuf.patch a/utils/protobuf.patch
+index e69de29..402bb8e 100644
+--- b/utils/protobuf.patch
++++ a/utils/protobuf.patch
+@@ -0,0 +1,16 @@
++diff --git a/ortools_solvers/libortools/protobuf/CMakeLists.txt b/ortools_solvers/libortools/protobuf/CMakeLists.txt
++index 6a6a752..fd4a1ea 100644
++--- a/ortools_solvers/libortools/protobuf/CMakeLists.txt
+++++ b/ortools_solvers/libortools/protobuf/CMakeLists.txt
++@@ -2,6 +2,11 @@
++ # to 3.26.
++ cmake_minimum_required(VERSION 3.16...3.26)
++ 
+++# Revert to old behavior for MSVC debug symbols.
+++if(POLICY CMP0141)
+++  cmake_policy(SET CMP0141 OLD)
+++endif()
+++
++ if(protobuf_VERBOSE)
++   message(STATUS "Protocol Buffers Configuring...")
++ endif()
