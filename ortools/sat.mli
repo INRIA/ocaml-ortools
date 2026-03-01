@@ -20,9 +20,10 @@
 (** A CP-SAT model. *)
 type model
 
-(** Create an empty model with an optional name. The [nvars] argument
-    optionally specifies the expected number of variables, which determines
-    the size and growth of internal data structures. *)
+(** Create an empty model. The [nvars] argument optionally specifies the
+    expected number of variables, which determines the size and growth of
+    internal data structures. The optional [name] argument is useful for
+    debugging and logging applications with multiple models. *)
 val make : ?nvars:int -> ?name:string -> unit -> model
 
 (** A subset of the integers. *)
@@ -72,7 +73,8 @@ module Var : sig (* {{{ *)
   (** An integer variable. *)
   type t_int  = [`Int] t
 
-  (** Add a new bounded integer variable to a model. *)
+  (** Add a new bounded integer variable to a model.
+      For a new variable [x], [lb <= x <= ub]. *)
   val new_int : model -> lb:int -> ub:int -> string -> t_int
 
   (** Restrict the new bounded integer variable to a domain. *)
@@ -89,6 +91,12 @@ module Var : sig (* {{{ *)
 
   (** Expose the underlying index of a variable. *)
   val to_index : 'a t -> int
+
+  (** Ignore any type information. Allows, for example, to stored
+      differently typed variables in a data structure. The explicit
+      {!to_bool}/{!to_int} casts, with dynamic checks, can be applied
+      to recover the types. *)
+  val any : [<`Bool|`Int] t -> [`Bool|`Int] t
 
   (** Assert that a variable is a boolean variable.
       Raises [Invalid_argument] for a variable [x] that does not satisfy

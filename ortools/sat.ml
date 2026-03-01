@@ -186,6 +186,8 @@ module Var = struct (* {{{ *)
         nv
     | Some v -> (m, v)
 
+  let any = Fun.id
+
   let to_bool ({ variables; _ } as m, x) =
     if ref_is_positive x
     then match DynArray.get variables x with
