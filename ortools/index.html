@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>index (ortools.index)</title><meta charset="utf-8"/><link rel="stylesheet" href="../odoc.support/odoc.css"/><meta name="generator" content="odoc 3.1.0"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../odoc.support/highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../index.html">Index</a> &#x00BB; ortools</nav><header class="odoc-preamble"><h1 id="ocaml-interface-to-google-or-tools"><a href="#ocaml-interface-to-google-or-tools" class="anchor"></a>OCaml interface to Google OR-Tools</h1><p>OR-Tools is an open source software suite for optimization, tuned for tackling the world's toughest problems in vehicle routing, flows, integer and linear programming, and constraint programming.</p><p>This interface allows for modeling problems in OCaml and exporting them, using <a href="https://protobuf.dev">Protocol Buffers</a>, for solution by different solvers. At least in principle: <b>for now, only the basic features of <a href="https://developers.google.com/optimization/cp">CP-SAT</a> are supported</b>.</p><p>The <a href="https://d-krupke.github.io/cpsat-primer/">CP-SAT Primer</a> gives an excellent introduction to constraint programming in general, and to the CP-SAT interface in particular. The examples are easily translated from Python to OCaml.</p></header><div class="odoc-tocs"><nav class="odoc-toc odoc-local-toc"><ul><li><a href="#api">Building Models</a></li><li><a href="#pb">Raw Protocol Buffers</a><ul><li><a href="#pb-sat_parameters">Sat_parameters</a></li><li><a href="#pb-cp_model">Cp_model</a></li></ul></li></ul></nav></div><div class="odoc-content"><h2 id="api"><a href="#api" class="anchor"></a>Building Models</h2><ul class="modules"><li><a href="Ortools/Sat/index.html"><code>Ortools.Sat</code></a> <span class="synopsis">Build a model for CP-SAT</span></li></ul><pre class="language-ocaml"><code>let model = Ortools.Sat.make () in
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>index (ortools.index)</title><meta charset="utf-8"/><link rel="stylesheet" href="../odoc.support/odoc.css"/><meta name="generator" content="odoc 3.1.0"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../odoc.support/highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script><script>let base_url = '../';
+let search_urls = ['db.js','../sherlodoc.js'];
+</script><script src="../odoc.support/odoc_search.js" defer="defer"></script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../index.html">Index</a> &#x00BB; ortools</nav><div class="odoc-search"><div class="search-inner"><input class="search-bar" placeholder="🔎 Type '/' to search..."/><div class="search-snake"></div><div class="search-result"></div></div></div><header class="odoc-preamble"><h1 id="ocaml-interface-to-google-or-tools"><a href="#ocaml-interface-to-google-or-tools" class="anchor"></a>OCaml interface to Google OR-Tools</h1><p>OR-Tools is an open source software suite for optimization, tuned for tackling the world's toughest problems in vehicle routing, flows, integer and linear programming, and constraint programming.</p><p>This interface allows for modeling problems in OCaml and exporting them, using <a href="https://protobuf.dev">Protocol Buffers</a>, for solution by different solvers. At least in principle: <b>for now, only the basic features of <a href="https://developers.google.com/optimization/cp">CP-SAT</a> are supported</b>.</p><p>The <a href="https://d-krupke.github.io/cpsat-primer/">CP-SAT Primer</a> gives an excellent introduction to constraint programming in general, and to the CP-SAT interface in particular. The examples are easily translated from Python to OCaml.</p></header><div class="odoc-tocs"><nav class="odoc-toc odoc-local-toc"><ul><li><a href="#api">Building Models</a></li><li><a href="#pb">Raw Protocol Buffers</a><ul><li><a href="#pb-sat_parameters">Sat_parameters</a></li><li><a href="#pb-cp_model">Cp_model</a></li></ul></li></ul></nav></div><div class="odoc-content"><h2 id="api"><a href="#api" class="anchor"></a>Building Models</h2><ul class="modules"><li><a href="Ortools/Sat/index.html"><code>Ortools.Sat</code></a> <span class="synopsis">Build a model for CP-SAT</span></li></ul><pre class="language-ocaml"><code>let printf = Printf.printf in
+let model = Ortools.Sat.make () in
 
 (* Add variables. *)
-let ub = max [50; 45; 37] in
+let ub = List.fold_left max min_int [50; 45; 37] in
 let x = Ortools.Sat.Var.new_int model ~lb:0 ~ub &quot;x&quot; in
 let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub &quot;y&quot; in
 let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub &quot;z&quot; in
@@ -17,12 +20,12 @@ Ortools.Sat.(maximize model (2 * x + 2 * y + 3 * z));
 
 (* Solve the model. *)
 let Ortools.Sat.Response.{ status;
-		  objective_value;
-		  solution;
-		  num_conflicts;
-		  num_branches;
-		  wall_time; _ }
-  = Ortools_solvers.Sat.solve ~parameters model
+                           objective_value;
+                           solution;
+                           num_conflicts;
+                           num_branches;
+                           wall_time; _ }
+  = Ortools_solvers.Sat.solve model
 in
 
 (match status with
@@ -38,7 +41,7 @@ printf &quot;\nStatistics\n&quot;;
 printf &quot;  status   : %s\n&quot; (Ortools.Sat.Response.string_of_status status);
 printf &quot;  conflicts: %d\n&quot; num_conflicts;
 printf &quot;  branches : %d\n&quot; num_branches;
-printf &quot;  wall time: %g s\n&quot; wall_time</code></pre><p>In the example above, access to the solver is provided by the <code>Ortools_solvers</code> package. An alternative is to dump the model to a file:</p><pre class="language-ocaml"><code>let oc = open_out &quot;cp_sat_example.pb&quot; in
+printf &quot;  wall time: %g s\n&quot; wall_time</code></pre><p>This program can be compiled by running:</p><pre class="language-shell"><code>ocamlfind ocamlopt -o prog -package ortools -package ortools_solvers -linkpkg prog.ml</code></pre><p>In the example above, access to the solver is provided by the <code>Ortools_solvers</code> package. An alternative is to dump the model to a file:</p><pre class="language-ocaml"><code>let oc = open_out &quot;cp_sat_example.pb&quot; in
 Ortools.Sat.pb_output model oc;
 close_out oc</code></pre><p>and invoke the solver via C++ or Python, e.g.,</p><pre class="language-python"><code>from ortools.sat.python import cp_model
 
