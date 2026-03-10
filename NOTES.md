@@ -29,7 +29,7 @@ ocaml-protoc --binary --pp --make --ml_out src/model \
 
 1. in *ocaml-ortools*: build the docs `dune build @doc`
 2. check out the `gh-pages` branch to *ocaml-ortools-gh-pages*
-3. in *ocaml_ortools-gh-pages*: `rm -r index.html odoc.support ortools ortools_solvers`
+3. in *ocaml_ortools-gh-pages*: `rm -rf index.html odoc.support ortools ortools_solvers`
 4. in *ocaml_ortools-gh-pages*: `cp -r ../ocaml-ortools/_build/default/_doc/_html/* .`
 5. `git add`, `commit`, `push`, etc.
 

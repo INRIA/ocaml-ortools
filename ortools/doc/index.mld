@@ -21,10 +21,11 @@ Python to OCaml.
 {!modules: Ortools.Sat}
 
 {[
+let printf = Printf.printf in
 let model = Ortools.Sat.make () in
 
 (* Add variables. *)
-let ub = max [50; 45; 37] in
+let ub = List.fold_left max min_int [50; 45; 37] in
 let x = Ortools.Sat.Var.new_int model ~lb:0 ~ub "x" in
 let y = Ortools.Sat.Var.new_int model ~lb:0 ~ub "y" in
 let z = Ortools.Sat.Var.new_int model ~lb:0 ~ub "z" in
@@ -39,12 +40,12 @@ Ortools.Sat.(maximize model (2 * x + 2 * y + 3 * z));
 
 (* Solve the model. *)
 let Ortools.Sat.Response.{ status;
-		  objective_value;
-		  solution;
-		  num_conflicts;
-		  num_branches;
-		  wall_time; _ }
-  = Ortools_solvers.Sat.solve ~parameters model
+                           objective_value;
+                           solution;
+                           num_conflicts;
+                           num_branches;
+                           wall_time; _ }
+  = Ortools_solvers.Sat.solve model
 in
 
 (match status with
@@ -61,6 +62,11 @@ printf "  status   : %s\n" (Ortools.Sat.Response.string_of_status status);
 printf "  conflicts: %d\n" num_conflicts;
 printf "  branches : %d\n" num_branches;
 printf "  wall time: %g s\n" wall_time
+]}
+
+This program can be compiled by running:
+{@shell[
+ocamlfind ocamlopt -o prog -package ortools -package ortools_solvers -linkpkg prog.ml
 ]}
 
 In the example above, access to the solver is provided by the
