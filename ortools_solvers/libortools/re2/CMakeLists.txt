@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 
 # https://github.com/google/oss-policies-info/blob/main/foundational-cxx-support-matrix.md
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.20)
 
 project(RE2 CXX)
 include(CMakePackageConfigHelpers)
