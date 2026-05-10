@@ -17,6 +17,9 @@ module Sat : sig
 
   (** Interface to {{:https://developers.google.com/optimization/cp}CP-SAT}. *)
 
+  (** Direct access to the underlying solver. *)
+  val raw : Ortools.Sat.raw_solver
+
   (** Try to solve the given model. *)
   val solve :
        ?observer:(Ortools.Sat.Response.t -> unit)

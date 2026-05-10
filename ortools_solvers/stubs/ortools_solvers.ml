@@ -22,13 +22,11 @@ module Sat = struct
       -> string (* response protocol buffer *)
     = "ocaml_ortools_sat_solve"
 
+  let raw ?observer_pb ~parameters_pb ~model_pb () =
+    c_solve model_pb parameters_pb observer_pb
+
   let solve ?observer ?parameters model =
-    Ortools.Sat.solve
-      (fun ?observer_pb ~parameters_pb ~model_pb () ->
-        c_solve model_pb parameters_pb observer_pb)
-      ?observer
-      ?parameters
-      model
+    Ortools.Sat.solve raw ?observer ?parameters model
 
 end
 
