@@ -586,6 +586,9 @@ module Response : sig (* {{{ *)
     (** The status of the solve. *)
     solution                                 : int array;
     (** A feasible solution, mapping each variable (index) to an integer value. *)
+    solution_vars                            : Var.t_int array;
+    (** An array associating indexes and variables.
+        Combine with {!solution} to associate variables to values. *)
     objective_value                          : float;
     (** The value of the objective for the given solution. *)
     best_objective_bound                     : float;

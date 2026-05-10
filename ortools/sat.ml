@@ -747,6 +747,7 @@ module Response = struct (* {{{ *)
   type t = {
     status                                   : status;
     solution                                 : int array;
+    solution_vars                            : Var.t_int array;
     objective_value                          : float;
     best_objective_bound                     : float;
     additional_solutions                     : int array list;
@@ -806,14 +807,17 @@ module Response = struct (* {{{ *)
                       gap_integral;
                       solution_info;
                       solve_log;
-  } = {
+  } =
+  let solution = solution_array solution in
+  {
     status                      = (match status with
                                    | PB.Unknown       -> Unknown
                                    | PB.Model_invalid -> ModelInvalid
                                    | PB.Feasible      -> Feasible
                                    | PB.Infeasible    -> Infeasible
                                    | PB.Optimal       -> Optimal);
-    solution                    = solution_array solution;
+    solution;
+    solution_vars               = Array.init (Array.length solution) (fun i -> (m, i));
     objective_value;
     best_objective_bound;
     additional_solutions        = List.map
