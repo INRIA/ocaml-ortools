@@ -107,11 +107,16 @@ module Var : sig (* {{{ *)
       Raises [Invalid_argument] on complemented boolean literals. *)
   val to_int  : 'a t -> [`Int] t
 
+  (** {1:utility Utilities} *)
+
   (** Return a string representing the variable or boolean literal. *)
   val to_string : 'a t -> string
 
   (** Pretty-printer for variables and boolean literals. *)
   val pp : Format.formatter -> 'a t -> unit
+
+  (** Return the protocol buffer representation of a variable. *)
+  val to_proto : 'a t -> Cp_model.integer_variable_proto
 
 end (* }}} *)
 
@@ -155,12 +160,6 @@ module LinearExpr : sig (* {{{ *)
   (** Negate all coefficients (and the offset). *)
   val neg : t -> t
 
-  (** Return a string representing the linear expression. *)
-  val to_string : t -> string
-
-  (** Pretty-printer for linear expressions. *)
-  val pp : Format.formatter -> t -> unit
-
   module L : sig (* {{{ *)
     (** Operators for building linear expressions.
         They are also available directly in the {!module:Sat} module. *)
@@ -191,6 +190,21 @@ module LinearExpr : sig (* {{{ *)
     val not : Var.t_bool -> Var.t_bool
 
   end (* }}} *)
+
+  (** {1:utility Utilities} *)
+
+  (** Return a string representing the linear expression. *)
+  val to_string : t -> string
+
+  (** Pretty-printer for linear expressions. *)
+  val pp : Format.formatter -> t -> unit
+
+  (** Return the protocol buffer representation of a linear expression. *)
+  val to_proto : t -> Cp_model.linear_expression_proto
+
+  (** Return the protocol buffer representation of a linear expression for use
+      as an objective. *)
+  val to_objective_proto : t -> Cp_model.cp_objective_proto
 
 end (* }}} *)
 
@@ -411,6 +425,9 @@ module Constraint : sig (* {{{ *)
 
   (** Pretty-printer for linear expressions. *)
   val pp : Format.formatter -> t -> unit
+
+  (** Return the protocol buffer representation of a constraint. *)
+  val to_proto : t -> Cp_model.constraint_proto_constraint
 
 end (* }}} *)
 

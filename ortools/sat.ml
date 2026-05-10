@@ -212,6 +212,11 @@ module Var = struct (* {{{ *)
 
   let pp fmt v = Format.pp_print_string fmt (to_string v)
 
+  let to_proto (({ variables; _ }, _) as v) =
+    match DynArray.get variables (to_index v) with
+    | Some p -> p
+    | None -> assert false
+
 end (* }}} *)
 
 (* Linear Constraints *)
@@ -878,14 +883,14 @@ let proto_solve (raw_solver : raw_solver) ?observer ?parameters model =
   let observer_pb =
     Option.map (fun f response_pb ->
                   let dec = Pbrt.Decoder.of_string response_pb in
-                  let response = Cp_model.decode_pb_cp_solver_response dec in
+                  let response = PB.decode_pb_cp_solver_response dec in
                   f response)
                observer
   in
   (* solve and decode response *)
   let response_pb = raw_solver ?observer_pb ~parameters_pb ~model_pb () in
   let dec = Pbrt.Decoder.of_string response_pb in
-  Cp_model.decode_pb_cp_solver_response dec
+  PB.decode_pb_cp_solver_response dec
 
 let solve raw_solver ?observer ?parameters model =
   let observer = Option.map
