@@ -28,5 +28,8 @@ module Sat = struct
   let solve ?observer ?parameters model =
     Ortools.Sat.solve raw ?observer ?parameters model
 
+  let proto_solve ?observer ?parameters model =
+    Ortools.Sat.proto_solve raw ?observer ?parameters model
+
 end
 

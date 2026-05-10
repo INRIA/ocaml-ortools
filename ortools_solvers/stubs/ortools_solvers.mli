@@ -27,5 +27,12 @@ module Sat : sig
     -> Ortools.Sat.model
     -> Ortools.Sat.Response.t
 
+  (** As for {!solve} but use protocol buffers directly. *)
+  val proto_solve:
+       ?observer:(Ortools.Cp_model.cp_solver_response -> unit)
+    -> ?parameters:Ortools.Sat_parameters.sat_parameters
+    -> Ortools.Cp_model.cp_model_proto
+    -> Ortools.Cp_model.cp_solver_response
+
 end
 

@@ -860,12 +860,11 @@ type raw_solver =
   -> unit
   -> string
 
-let solve (raw_solver : raw_solver) ?observer ?parameters model =
+let proto_solve (raw_solver : raw_solver) ?observer ?parameters model =
   (* encode model *)
   let enc = Pbrt.Encoder.create () in
-  pb_encode model enc;
+  PB.encode_pb_cp_model_proto model enc;
   let model_pb = Pbrt.Encoder.to_string enc in
-
   (* encode parameters *)
   let parameters = match parameters with
                    | None -> Sat_parameters.default_sat_parameters ()
@@ -877,18 +876,28 @@ let solve (raw_solver : raw_solver) ?observer ?parameters model =
   Pbrt.Encoder.reset enc;
   (* wrap observer *)
   let observer_pb =
-    match observer with
-    | None -> None
-    | Some f ->
-        Some (fun response_pb ->
-          let dec = Pbrt.Decoder.of_string response_pb in
-          let response = Cp_model.decode_pb_cp_solver_response dec in
-          f (Response.of_proto model response))
+    Option.map (fun f response_pb ->
+                  let dec = Pbrt.Decoder.of_string response_pb in
+                  let response = Cp_model.decode_pb_cp_solver_response dec in
+                  f response)
+               observer
   in
   (* solve and decode response *)
   let response_pb = raw_solver ?observer_pb ~parameters_pb ~model_pb () in
   let dec = Pbrt.Decoder.of_string response_pb in
-  let response = Cp_model.decode_pb_cp_solver_response dec in
+  Cp_model.decode_pb_cp_solver_response dec
+
+let solve raw_solver ?observer ?parameters model =
+  let observer = Option.map
+                   (fun f response -> f (Response.of_proto model response))
+                   observer
+  in
+  let response = proto_solve
+                   raw_solver
+                   ?observer
+                   ?parameters
+                   (to_proto model)
+  in
   Response.of_proto model response
 
 include LinearExpr.L

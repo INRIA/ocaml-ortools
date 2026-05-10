@@ -661,6 +661,15 @@ val solve :
   -> model
   -> Response.t
 
+(** As for {!solve}, but works directly with protocol buffers rather than
+    through the structured interface. *)
+val proto_solve :
+     raw_solver
+  -> ?observer:(Cp_model.cp_solver_response -> unit)
+  -> ?parameters:Sat_parameters.sat_parameters
+  -> Cp_model.cp_model_proto
+  -> Cp_model.cp_solver_response
+
 (** {2:output Output} *)
 
 (** Converts a model to a protocol buffer. NB: copying is minimized, so the
