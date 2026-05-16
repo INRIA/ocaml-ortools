@@ -13,6 +13,9 @@
 (* Based on OR-Tools, Copyright 2010-2025 Google LLC
    OCaml Interface: 2025 T. Bourke *)
 
+(** Ortools version ([major, minor, patch]). *)
+val version : int * int * int
+
 module Sat : sig
 
   (** Interface to {{:https://developers.google.com/optimization/cp}CP-SAT}. *)

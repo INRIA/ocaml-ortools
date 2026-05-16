@@ -24,6 +24,7 @@
 
 #include "absl/log/check.h"
 #include "ortools/base/memutil.h"
+#include "ortools/base/version.h"
 #include "ortools/sat/cp_model.pb.h"
 #include "ortools/sat/cp_model_solver.h"
 #include "ortools/sat/model.h"
@@ -63,6 +64,19 @@ static CAMLprim void do_callback(value vcbf, const CpSolverResponse& res)
 }
 
 extern "C" {
+
+CAMLprim value ocaml_ortools_version(value vunit)
+{
+    CAMLparam1(vunit);
+    CAMLlocal1(vres);
+
+    vres = caml_alloc_tuple(3);
+    Store_field(vres, 0, Val_int(operations_research::OrToolsMajorVersion ()));
+    Store_field(vres, 1, Val_int(operations_research::OrToolsMinorVersion ()));
+    Store_field(vres, 2, Val_int(operations_research::OrToolsPatchVersion ()));
+
+    CAMLreturn(vres);
+}
 
 CAMLprim value ocaml_ortools_sat_solve(value vmodel, value vparams, value vocbf)
 {

@@ -13,6 +13,10 @@
 (* Based on OR-Tools, Copyright 2010-2025 Google LLC
    OCaml Interface: 2025 T. Bourke *)
 
+external c_version : unit -> int * int * int = "ocaml_ortools_version"
+
+let version = c_version ()
+
 module Sat = struct
 
   external c_solve
