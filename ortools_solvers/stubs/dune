@@ -15,6 +15,7 @@
            -I../libortools/abseil-cpp
            -I../libortools/protobuf/src
            -I../libortools/protobuf/third_party/utf8_range
+           -DNDEBUG
            -DOR_PROTO_DLL=))
   (libraries ortools threads)
   (library_flags :standard
