@@ -8,7 +8,8 @@
 ; CMAKE_BUILD_PARALLEL_LEVEL=$(expr $(nproc) - 1)
 ; CMAKE_BUILD_PARALLEL_LEVEL=$(expr $(sysctl -n hw.logicalcpu) - 1)
 
-; macosx + use depext: eigen3 abseil re2 protobuf protobuf-c
+; macosx + use depext: abseil re2 protobuf protobuf-c
+; build and install: eigen3
 (subdir libortools-build
   (rule
     (enabled_if (= %{ocaml-config:system} macosx))
