@@ -1,6 +1,5 @@
 
 (library
-  (enabled_if (<> %{ocaml-config:system} macosx))
   (name ortools_solvers)
   (public_name ortools_solvers)
   (synopsis "Call Google OR-Tools solvers")
@@ -22,34 +21,6 @@
                  -ccopt "-L$CAMLORIGIN"
                  -ccopt "-Wl,-rpath,$CAMLORIGIN")
   (c_library_flags :standard
-                   -lortools
-                   -labsl_log_internal_message
-                   -labsl_raw_logging_internal
-                   -labsl_raw_hash_set
-                   -lprotobuf)
-)
-
-(library
-  (enabled_if (= %{ocaml-config:system} macosx))
-  (name ortools_solvers)
-  (public_name ortools_solvers)
-  (synopsis "Call Google OR-Tools solvers")
-  (modules ortools_solvers)
-  (foreign_stubs
-    (language cxx)
-    (names ocaml_ortools_solvers)
-    (flags :standard
-           -std=c++20
-           -I../libortools
-           -I%{dep:../libortools-build/build}
-           -I%{read-lines:brew_prefix.sexp}/include
-           -DOR_PROTO_DLL=))
-  (libraries ortools threads)
-  (library_flags :standard
-                 -ccopt "-L$CAMLORIGIN"
-                 -ccopt "-Wl,-rpath,$CAMLORIGIN")
-  (c_library_flags :standard
-                   -L%{read-lines:brew_prefix.sexp}/lib
                    -lortools
                    -labsl_log_internal_message
                    -labsl_raw_logging_internal

@@ -1,4 +1,13 @@
 
+## 9.15.0-3 (2026-10-11)
+
+MacOS: build all required libraries (abseil, re2, protobuf, protobuf-c) 
+rather than rely on brew-installed external dependencies to avoid build 
+failures after the recent update of Abseil to 20260817. The other external 
+libraries all require a consistent version of Abseil. This change increases 
+the build time but also its robustness to changes in the build environment, 
+i.e., to changes in the packages install with homebrew.
+
 ## 9.15.0-2 (2026-06-10)
 
 Expose more of the underlying protocol buffers machinery to facilitate the 

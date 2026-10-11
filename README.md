@@ -14,8 +14,8 @@ This project provides two packages:
   with the CP-SAT solver.
 
 * `ortools_solvers` builds on `ortools` to provide a simple OCaml interface 
-  for calling CP-SAT. This package builds its own version of OR-Tools and, 
-  on Linux, the libraries abseil, re2, protobuf, and protobuf-c.
+  for calling CP-SAT. This package builds its own version of OR-Tools and 
+  the libraries abseil, re2, protobuf, and protobuf-c.
 
 Online docs: https://inria.github.io/ocaml-ortools/
 
@@ -66,7 +66,7 @@ CP-SAT on a given platform and calling it from an OCaml program. To do this,
 the source of OR-Tools and required libraries is included in the package and 
 built with the OCaml interface.
 
-On macOS, the build relies on the homebrew packages `abseil`, `protobuf`, 
+On macOS, the build relies on the homebrew packages `protobuf`, 
 `protobuf-c`, and `re2`, and also an internal build of `eigen3`. On Linux, 
 all of these libraries are built internally.
 
