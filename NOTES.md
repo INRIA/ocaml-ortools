@@ -25,6 +25,18 @@ ocaml-protoc --binary --pp --make --ml_out src/model \
 1. git tag -a <version> -m '...release notes...' --sign
 2. dune-release bistro
 
+Edit `ortools_solvers` opam package:
+
+```
+depends: [
+  ...
+  "ortools"	{= version}
+]
+
+available: os != "win32"
+```
+
+
 ## Update the docs
 
 1. in *ocaml-ortools*: build the docs `dune build @doc`
